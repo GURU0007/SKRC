@@ -52,7 +52,7 @@ function App() {
               </div>
               <div className="panel-content">
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '15px' }}>
-                  Explore active HMDA/GHMC layout plans. View available plots on our blueprint grid, click to see sizing specifications, orientations, and request booking quotes.
+                  Explore active KUDA & AP-RERA approved layout plans. View available plots on our blueprint grid, click to see sizing specifications, orientations, and request booking quotes.
                 </p>
                 <button className="gold-button" style={{ width: '100%' }} onClick={() => setActiveTab('projects')}>
                   View Interactive Layout
