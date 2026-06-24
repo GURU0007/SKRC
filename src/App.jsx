@@ -112,7 +112,7 @@ function App() {
 
       {/* Footer */}
       <footer style={{ marginTop: 'auto', paddingTop: '30px', paddingBottom: '10px', borderTop: '1px solid var(--border-color)', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-        Sri Krishna Real Estate & Constructions © 2026. All rights reserved. Madhapur, Hyderabad, TS.
+        Sri Krishna Real Estate & Constructions © 2026. All rights reserved. Kurnool, Andhra Pradesh.
       </footer>
     </div>
   );
