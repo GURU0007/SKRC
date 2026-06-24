@@ -67,7 +67,7 @@ function App() {
               </div>
               <div className="panel-content">
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '15px' }}>
-                  Calculate construction material demands based on area. Get approximate budgets for cement, TMT reinforcement steel, bricks, labor, and aggregated sand dynamically.
+                  Estimate material costs for your build — cement, TMT steel, bricks, sand, and labor — calculated dynamically based on your plot area.
                 </p>
                 <button className="gold-button" style={{ width: '100%' }} onClick={() => setActiveTab('estimator')}>
                   Calculate Construction Budget

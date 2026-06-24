@@ -25,7 +25,7 @@ function Hero() {
       </div>
       <div className="hero-image-container">
         <div className="hero-image-wrapper">
-          <img src={process.env.PUBLIC_URL + '/sk_villa.jpg'} alt="Sri Krishna Modern Villa Project" className="hero-img" />
+          <img src="/sk_villa.jpg" alt="Sri Krishna Modern Villa Project" className="hero-img" />
         </div>
       </div>
     </section>

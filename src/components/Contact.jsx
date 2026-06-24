@@ -130,8 +130,8 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
             <div className="info-item-card">
               <span className="info-icon-wrapper"><PhoneIcon /></span>
               <div className="info-meta">
-                <h5>Primary Helpline</h5>
-                <p>+91 94401 23456 / +91 80081 98765</p>
+                <h5>R. Murali Krishna Reddy</h5>
+                <p>+91 8985961113</p>
               </div>
             </div>
 
@@ -146,8 +146,8 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
             <div className="info-item-card">
               <span className="info-icon-wrapper"><MapPinIcon /></span>
               <div className="info-meta">
-                <h5>Corporate Office Address</h5>
-                <p>Plot No: 42, Sri Krishna Arcade, Madhapur, Hyderabad, Telangana - 500081</p>
+                <h5>Office Address</h5>
+                <p>Bellary Rd, beside Union Bank, A.P. Transco Office, Sampath Nagar, Kurnool, Andhra Pradesh 518003</p>
               </div>
             </div>
 

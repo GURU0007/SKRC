@@ -158,7 +158,7 @@ function Projects({ handleSelectPlotInquiry }) {
             {/* Card 1 */}
             <div className="panel" style={{ overflow: 'hidden' }}>
               <div style={{ height: '160px', background: '#1c2436', overflow: 'hidden' }}>
-                <img src={process.env.PUBLIC_URL + '/sk_villa.jpg'} alt="Premium Luxury Villas" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <img src="/sk_villa.jpg" alt="Premium Luxury Villas" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <div style={{ padding: '16px' }}>
                 <h4 style={{ color: 'var(--accent-gold)' }}>Sri Krishna Arcade</h4>
