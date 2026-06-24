@@ -1,5 +1,6 @@
 /* Main App layout */
 .app-container {
+  width: 100%;
   max-width: 1300px;
   margin: 0 auto;
   padding: 20px;
@@ -7,6 +8,7 @@
   flex-direction: column;
   gap: 30px;
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 /* Header */
@@ -325,7 +327,7 @@
 
 .plots-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(55px, 1fr));
   gap: 8px;
 }
 
@@ -582,6 +584,9 @@ textarea.form-input {
     padding: 10px;
     gap: 20px;
   }
+  .app-header-nav {
+    width: 100%;
+  }
   .nav-links {
     flex-wrap: wrap;
     padding: 8px 4px;
@@ -598,6 +603,12 @@ textarea.form-input {
   }
   .panel-content {
     padding: 14px;
+  }
+  .plot-blueprint {
+    padding: 12px;
+  }
+  .blueprint-header {
+    font-size: 0.7rem;
   }
 }
 
