@@ -5,9 +5,10 @@ function Navbar({ activeTab, setActiveTab }) {
     <header className="app-header-nav">
       {/* Banner */}
       <div className="brand-banner">
-        <h1 className="banner-title">Sri Krishna</h1>
-        <p className="banner-subtitle">Real Estate & Constructions</p>
-        <span className="banner-tagline">From Land to Landmark</span>
+        <h1 className="banner-title">
+          Sri Krishna <span className="banner-subtitle">Real Estate & Constructions</span>
+        </h1>
+        <div className="banner-tagline">From Land to Landmark</div>
       </div>
 
       {/* Navigation */}
