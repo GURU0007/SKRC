@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CustomSelect from './CustomSelect';
+import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
 // Initial default properties for Kurnool district
 const DEFAULT_PROPERTIES = [
@@ -16,7 +17,8 @@ const DEFAULT_PROPERTIES = [
     contactPhone: '+91 8985961113',
     image: '/logo.jpeg',
     tag: 'Verified Layout',
-    date: '2026-06-20'
+    date: '2026-06-20',
+    user_id: 'default'
   },
   {
     id: 'prop-2',
@@ -31,7 +33,8 @@ const DEFAULT_PROPERTIES = [
     contactPhone: '+91 8985961113',
     image: '/sk_villa.jpg',
     tag: 'Ready to Move',
-    date: '2026-06-24'
+    date: '2026-06-24',
+    user_id: 'default'
   },
   {
     id: 'prop-3',
@@ -46,7 +49,8 @@ const DEFAULT_PROPERTIES = [
     contactPhone: '+91 8985961113',
     image: '/logo.jpeg',
     tag: 'Hot Deal',
-    date: '2026-06-22'
+    date: '2026-06-22',
+    user_id: 'default'
   },
   {
     id: 'prop-4',
@@ -61,7 +65,8 @@ const DEFAULT_PROPERTIES = [
     contactPhone: '+91 8985961113',
     image: '/sk_villa.jpg',
     tag: 'Prime Location',
-    date: '2026-06-18'
+    date: '2026-06-18',
+    user_id: 'default'
   },
   {
     id: 'prop-5',
@@ -76,7 +81,8 @@ const DEFAULT_PROPERTIES = [
     contactPhone: '+91 8985961113',
     image: '/logo.jpeg',
     tag: 'Corner Plot',
-    date: '2026-06-25'
+    date: '2026-06-25',
+    user_id: 'default'
   },
   {
     id: 'prop-6',
@@ -91,7 +97,8 @@ const DEFAULT_PROPERTIES = [
     contactPhone: '+91 8985961113',
     image: '/sk_villa.jpg',
     tag: 'New Launch',
-    date: '2026-06-25'
+    date: '2026-06-25',
+    user_id: 'default'
   },
   {
     id: 'prop-7',
@@ -106,7 +113,8 @@ const DEFAULT_PROPERTIES = [
     contactPhone: '+91 8985961113',
     image: '/logo.jpeg',
     tag: 'Best Value',
-    date: '2026-06-25'
+    date: '2026-06-25',
+    user_id: 'default'
   },
   {
     id: 'prop-8',
@@ -121,7 +129,8 @@ const DEFAULT_PROPERTIES = [
     contactPhone: '+91 8985961113',
     image: '/logo.jpeg',
     tag: 'Farm Layout',
-    date: '2026-06-24'
+    date: '2026-06-24',
+    user_id: 'default'
   },
   {
     id: 'prop-9',
@@ -136,17 +145,14 @@ const DEFAULT_PROPERTIES = [
     contactPhone: '+91 8985961113',
     image: '/sk_villa.jpg',
     tag: 'Investment Pick',
-    date: '2026-06-23'
+    date: '2026-06-23',
+    user_id: 'default'
   }
 ];
 
 // Icons
 const SearchIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-);
-
-const FilterIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
 );
 
 const TagIcon = () => (
@@ -161,6 +167,17 @@ function Marketplace() {
   const [activeSubTab, setActiveSubTab] = useState('browse'); // 'browse' or 'list'
   const [listings, setListings] = useState([]);
   const [selectedProp, setSelectedProp] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Authentication State
+  const [user, setUser] = useState(null);
+  const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [authName, setAuthName] = useState('');
+  const [authPhone, setAuthPhone] = useState('');
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState('');
@@ -179,9 +196,73 @@ function Marketplace() {
   const [formContactName, setFormContactName] = useState('');
   const [formContactPhone, setFormContactPhone] = useState('');
   const [formSubmitted, setFormSubmitted] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState('');
 
-  // Load listings from localStorage + default lists on startup
+  // 1. Get Authentication State from Supabase
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        // Pre-fill listing contact details with user metadata if logged in
+        setFormContactName(session.user.user_metadata?.name || '');
+        setFormContactPhone(session.user.user_metadata?.phone || '');
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        setFormContactName(session.user.user_metadata?.name || '');
+        setFormContactPhone(session.user.user_metadata?.phone || '');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // 2. Fetch Listings (Supabase with Local Fallback)
+  const fetchProperties = async () => {
+    setIsLoading(true);
+    if (isSupabaseConfigured) {
+      try {
+        const { data, error } = await supabase
+          .from('properties')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        
+        // Map Supabase column names if they match camelCase or just merge
+        const dbListings = data.map(item => ({
+          id: item.id,
+          title: item.title,
+          type: item.type,
+          price: Number(item.price),
+          size: item.size,
+          facing: item.facing,
+          location: item.location,
+          description: item.description,
+          image: item.image_url || '/logo.jpeg',
+          contactName: item.contact_name,
+          contactPhone: item.contact_phone,
+          tag: item.tag || 'Owner Listed',
+          date: item.created_at.split('T')[0],
+          user_id: item.user_id
+        }));
+
+        setListings([...DEFAULT_PROPERTIES, ...dbListings]);
+      } catch (err) {
+        console.error('Failed to load from Supabase database. Falling back to local.', err);
+        loadLocalFallbacks();
+      }
+    } else {
+      loadLocalFallbacks();
+    }
+    setIsLoading(false);
+  };
+
+  const loadLocalFallbacks = () => {
     const saved = localStorage.getItem('sri_krishna_marketplace_listings');
     if (saved) {
       try {
@@ -193,6 +274,10 @@ function Marketplace() {
     } else {
       setListings(DEFAULT_PROPERTIES);
     }
+  };
+
+  useEffect(() => {
+    fetchProperties();
   }, []);
 
   const formatCurrency = (num) => {
@@ -203,72 +288,176 @@ function Marketplace() {
     }).format(num);
   };
 
-  // Form submission handler
-  const handleAddProperty = (e) => {
+  // 3. User Authentication handlers (Login / Sign Up)
+  const handleAuthSubmit = async (e) => {
     e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
+
+    if (authMode === 'login') {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: authEmail,
+        password: authPassword
+      });
+      if (error) {
+        setAuthError(error.message);
+      } else {
+        setAuthEmail('');
+        setAuthPassword('');
+      }
+    } else {
+      // Signup Mode
+      if (!authName || !authPhone) {
+        setAuthError('Please fill in your name and phone number.');
+        setAuthLoading(false);
+        return;
+      }
+      const { data, error } = await supabase.auth.signUp({
+        email: authEmail,
+        password: authPassword,
+        options: {
+          data: {
+            name: authName,
+            phone: authPhone
+          }
+        }
+      });
+      if (error) {
+        setAuthError(error.message);
+      } else {
+        setAuthError('Verification email sent! Please check your inbox or log in if confirmation is disabled.');
+        // Auto signin handles session switch if mail verification is off
+      }
+    }
+    setAuthLoading(false);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
+  // 4. Form submission handler for new listing
+  const handleAddProperty = async (e) => {
+    e.preventDefault();
+    setFormError('');
     if (!formTitle || !formPrice || !formSize || !formLocation || !formContactPhone || !formContactName) return;
 
-    const newProperty = {
-      id: `custom-${Date.now()}`,
-      title: formTitle,
-      type: formType,
-      price: Number(formPrice),
-      size: formSize,
-      facing: formFacing,
-      location: formLocation,
-      description: formDescription || 'No description provided.',
-      contactName: formContactName,
-      contactPhone: formContactPhone,
-      image: '/logo.jpeg', // Default logo placeholder
-      tag: 'Owner Listed',
-      date: new Date().toISOString().split('T')[0]
-    };
+    setFormLoading(true);
 
-    // Get current localstorage values and append
-    const saved = localStorage.getItem('sri_krishna_marketplace_listings');
-    let currentSaved = [];
-    if (saved) {
+    if (isSupabaseConfigured && user) {
+      // Save directly to Supabase cloud Database
       try {
-        currentSaved = JSON.parse(saved);
-      } catch (err) {}
+        const { data, error } = await supabase
+          .from('properties')
+          .insert([{
+            title: formTitle,
+            type: formType,
+            price: Number(formPrice),
+            size: formSize,
+            facing: formFacing,
+            location: formLocation,
+            description: formDescription || 'No description provided.',
+            contact_name: formContactName,
+            contact_phone: formContactPhone,
+            image_url: '/logo.jpeg',
+            tag: 'Owner Listed',
+            user_id: user.id
+          }]);
+
+        if (error) throw error;
+        setFormSubmitted(true);
+        fetchProperties();
+      } catch (err) {
+        setFormError(err.message || 'Failed to list property in cloud database.');
+      }
+    } else {
+      // Mock / Offline LocalStorage Save
+      const newProperty = {
+        id: `custom-${Date.now()}`,
+        title: formTitle,
+        type: formType,
+        price: Number(formPrice),
+        size: formSize,
+        facing: formFacing,
+        location: formLocation,
+        description: formDescription || 'No description provided.',
+        contactName: formContactName,
+        contactPhone: formContactPhone,
+        image: '/logo.jpeg',
+        tag: 'Local Listing',
+        date: new Date().toISOString().split('T')[0],
+        user_id: 'local-test-user'
+      };
+
+      const saved = localStorage.getItem('sri_krishna_marketplace_listings');
+      let currentSaved = [];
+      if (saved) {
+        try {
+          currentSaved = JSON.parse(saved);
+        } catch (err) {}
+      }
+      
+      const updatedSaved = [newProperty, ...currentSaved];
+      localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(updatedSaved));
+      setListings([...DEFAULT_PROPERTIES, ...updatedSaved]);
+      setFormSubmitted(true);
     }
     
-    const updatedSaved = [newProperty, ...currentSaved];
-    localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(updatedSaved));
-    
-    // Update local state
-    setListings([...DEFAULT_PROPERTIES, ...updatedSaved]);
-    setFormSubmitted(true);
-    
-    // Reset form fields
+    // Reset inputs
     setFormTitle('');
     setFormPrice('');
     setFormSize('');
     setFormLocation('');
     setFormDescription('');
-    setFormContactName('');
-    setFormContactPhone('');
+    setFormLoading(false);
+  };
+
+  // 5. Delete Listing handler (checks ownership)
+  const handleDeleteListing = async (propId) => {
+    if (!window.confirm('Are you sure you want to delete this listing?')) return;
+    
+    if (isSupabaseConfigured && user) {
+      try {
+        const { error } = await supabase
+          .from('properties')
+          .delete()
+          .eq('id', propId)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+        setSelectedProp(null);
+        fetchProperties();
+      } catch (err) {
+        alert(err.message || 'Failed to delete listing.');
+      }
+    } else {
+      // Local storage delete
+      const saved = localStorage.getItem('sri_krishna_marketplace_listings');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          const filtered = parsed.filter(p => p.id !== propId);
+          localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(filtered));
+          setListings([...DEFAULT_PROPERTIES, ...filtered]);
+          setSelectedProp(null);
+        } catch (err) {}
+      }
+    }
   };
 
   // Filtering Logic
   const filteredListings = listings.filter((prop) => {
-    // Search Query match
     const textToSearch = `${prop.title} ${prop.location} ${prop.description}`.toLowerCase();
     if (searchQuery && !textToSearch.includes(searchQuery.toLowerCase())) {
       return false;
     }
-
-    // Type Match
     if (filterType !== 'all' && prop.type !== filterType) {
       return false;
     }
-
-    // Facing Match
     if (filterFacing !== 'all' && prop.facing !== filterFacing) {
       return false;
     }
-
-    // Price Match
     if (filterPrice !== 'all') {
       const price = prop.price;
       if (filterPrice === 'under-20') return price < 2000000;
@@ -276,7 +465,6 @@ function Marketplace() {
       if (filterPrice === '50-100') return price > 5000000 && price <= 10000000;
       if (filterPrice === 'over-100') return price > 10000000;
     }
-
     return true;
   });
 
@@ -288,6 +476,18 @@ function Marketplace() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
+      {/* Configuration Status Banner */}
+      {!isSupabaseConfigured && (
+        <div style={{ background: 'rgba(197,168,128,0.08)', border: '1px dashed var(--accent-gold)', borderRadius: '6px', padding: '10px 15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--accent-gold)' }}>
+            ⚠️ <strong>Sandbox Mode:</strong> Real database config not found. Listings are saved locally. Connect your Supabase project in the <code>.env</code> file.
+          </span>
+          <a href="/supabase_setup.sql" target="_blank" download style={{ fontSize: '0.75rem', color: '#fff', textDecoration: 'underline', fontWeight: '500' }}>
+            Download SQL Setup Script
+          </a>
+        </div>
+      )}
+
       {/* Tab Switcher Headers */}
       <div className="panel" style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.1)' }}>
         <div style={{ display: 'flex', gap: '6px' }}>
@@ -306,9 +506,21 @@ function Marketplace() {
             <PlusIcon /> List Your Property
           </button>
         </div>
-        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'none', md: 'inline' }}>
-          Total Listings: {listings.length}
-        </span>
+        
+        {user ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)', fontWeight: '600' }}>
+              👤 {user.email}
+            </span>
+            <button onClick={handleLogout} className="filter-btn" style={{ fontSize: '0.7rem', padding: '4px 8px', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}>
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+            Sign in required to list properties
+          </span>
+        )}
       </div>
 
       {activeSubTab === 'browse' ? (
@@ -385,7 +597,11 @@ function Marketplace() {
           </div>
 
           {/* Grid Layout of Property Cards */}
-          {filteredListings.length === 0 ? (
+          {isLoading ? (
+            <div className="panel" style={{ padding: '60px', textAlign: 'center' }}>
+              <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>Loading properties...</span>
+            </div>
+          ) : filteredListings.length === 0 ? (
             <div className="panel" style={{ padding: '60px', textAlign: 'center' }}>
               <span style={{ fontSize: '2.5rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '10px' }}>🔍</span>
               <h4>No Properties Match Your Filters</h4>
@@ -407,7 +623,6 @@ function Marketplace() {
                   }}
                   onClick={() => setSelectedProp(prop)}
                 >
-                  {/* Photo area */}
                   <div style={{ height: '180px', position: 'relative', background: '#0f172a' }}>
                     <img 
                       src={prop.image} 
@@ -422,7 +637,6 @@ function Marketplace() {
                     </div>
                   </div>
 
-                  {/* Text area */}
                   <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1, gap: '10px' }}>
                     <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--accent-gold)', fontWeight: '700', letterSpacing: '1px' }}>
                       {prop.type === 'plot' ? 'Plot / Land' : prop.type} • {prop.facing} Facing
@@ -479,7 +693,6 @@ function Marketplace() {
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Image panel */}
                 <div style={{ height: '250px', position: 'relative', background: '#090c12' }}>
                   <img src={selectedProp.image} alt={selectedProp.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <button 
@@ -493,14 +706,25 @@ function Marketplace() {
                   </div>
                 </div>
 
-                {/* Info panel */}
                 <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                  <div>
-                    <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--accent-gold)', fontWeight: '700', letterSpacing: '1.5px' }}>
-                      {selectedProp.type} Property • {selectedProp.facing} Facing
-                    </span>
-                    <h3 style={{ fontSize: '1.3rem', marginTop: '4px' }}>{selectedProp.title}</h3>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>📍 {selectedProp.location}</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--accent-gold)', fontWeight: '700', letterSpacing: '1.5px' }}>
+                        {selectedProp.type} Property • {selectedProp.facing} Facing
+                      </span>
+                      <h3 style={{ fontSize: '1.3rem', marginTop: '4px' }}>{selectedProp.title}</h3>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>📍 {selectedProp.location}</p>
+                    </div>
+                    {/* Delete button: Only show if this listing is owned by the logged-in user */}
+                    {user && selectedProp.user_id === user.id && (
+                      <button 
+                        onClick={() => handleDeleteListing(selectedProp.id)}
+                        className="filter-btn" 
+                        style={{ borderColor: 'var(--accent-red)', color: 'var(--accent-red)', padding: '6px 12px', fontSize: '0.75rem' }}
+                      >
+                        Delete Listing
+                      </button>
+                    )}
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', background: '#1c2436', padding: '12px 16px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
@@ -556,163 +780,272 @@ function Marketplace() {
 
         </div>
       ) : (
-        /* List Your Property Form Page */
-        <div className="panel">
-          <div className="panel-header">
-            <h3 className="panel-title"><PlusIcon /> Add Your Property Listing</h3>
-          </div>
-          <div className="panel-content">
-            {formSubmitted ? (
-              <div style={{ padding: '40px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '3rem', color: 'var(--accent-green)' }}>✓</span>
-                <h4 style={{ marginTop: '15px' }}>Property Listed Successfully (Locally)</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px', maxWidth: '400px' }}>
-                  Your listing is now saved locally on this browser. You can go to the "Browse Properties" tab to view, search, or filter it instantly.
-                </p>
-                <button 
-                  className="gold-button" 
-                  style={{ marginTop: '20px' }} 
-                  onClick={() => { setActiveSubTab('browse'); setFormSubmitted(false); }}
-                >
-                  Go to Browse Properties
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleAddProperty} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        /* List Your Property Tab (Enforces Authentication) */
+        !user ? (
+          /* Render Login/Registration Box */
+          <div className="panel" style={{ maxWidth: '450px', margin: '20px auto', width: '100%' }}>
+            <div className="panel-header" style={{ justifyContent: 'center' }}>
+              <h3 className="panel-title">
+                {authMode === 'login' ? 'Sign In to List Property' : 'Create Agent/Owner Account'}
+              </h3>
+            </div>
+            <div className="panel-content">
+              <form onSubmit={handleAuthSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                 
-                <div className="form-group">
-                  <label>Listing Title</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. 3 BHK Gated Villa near Sampath Nagar"
-                    value={formTitle}
-                    onChange={(e) => setFormTitle(e.target.value)}
-                    required 
-                  />
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Property Type</label>
-                    <CustomSelect 
-                      value={formType}
-                      onChange={setFormType}
-                      options={[
-                        { value: 'plot', label: 'Plot / Land Layout' },
-                        { value: 'villa', label: 'Villa / Independent House' },
-                        { value: 'apartment', label: 'Apartment / Flat' },
-                        { value: 'commercial', label: 'Commercial Space' }
-                      ]}
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Orientation / Facing</label>
-                    <CustomSelect 
-                      value={formFacing}
-                      onChange={formFacing => setFormFacing(formFacing)}
-                      options={[
-                        { value: 'East', label: 'East Facing' },
-                        { value: 'West', label: 'West Facing' },
-                        { value: 'North', label: 'North Facing' },
-                        { value: 'South', label: 'South Facing' }
-                      ]}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Asking Price (INR)</label>
-                    <input 
-                      type="number" 
-                      className="form-input" 
-                      placeholder="e.g. 4500000"
-                      value={formPrice}
-                      onChange={(e) => setFormPrice(e.target.value)}
-                      required 
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Property Size (Sq. Ft. or Cents)</label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="e.g. 1500 Sq. Ft. or 5 Cents"
-                      value={formSize}
-                      onChange={(e) => setFormSize(e.target.value)}
-                      required 
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Location Address / Landmark</label>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="e.g. Bellary Road, beside Union Bank, Kurnool"
-                    value={formLocation}
-                    onChange={(e) => setFormLocation(e.target.value)}
-                    required 
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Detailed Description</label>
-                  <textarea 
-                    className="form-input" 
-                    rows="4" 
-                    placeholder="Describe amenities, surroundings, road width, approvals, construction state..."
-                    value={formDescription}
-                    onChange={(e) => setFormDescription(e.target.value)}
-                  />
-                </div>
-
-                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '15px', marginTop: '10px' }}>
-                  <h5 style={{ color: 'var(--accent-gold)', marginBottom: '15px' }}>Contact Information</h5>
-                  
-                  <div className="form-row">
+                {authMode === 'signup' && (
+                  <>
                     <div className="form-group">
-                      <label>Contact Person Name</label>
+                      <label>Full Name</label>
                       <input 
                         type="text" 
                         className="form-input" 
-                        placeholder="Enter your name"
-                        value={formContactName}
-                        onChange={(e) => setFormContactName(e.target.value)}
+                        placeholder="Enter your name" 
+                        value={authName}
+                        onChange={(e) => setAuthName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Phone Number (WhatsApp pref.)</label>
+                      <input 
+                        type="tel" 
+                        className="form-input" 
+                        placeholder="e.g. +91 89859 61113" 
+                        value={authPhone}
+                        onChange={(e) => setAuthPhone(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="form-group">
+                  <label>Email Address</label>
+                  <input 
+                    type="email" 
+                    className="form-input" 
+                    placeholder="Enter email address" 
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Password</label>
+                  <input 
+                    type="password" 
+                    className="form-input" 
+                    placeholder="Min 6 characters" 
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                {authError && (
+                  <p style={{ color: authError.includes('sent') ? 'var(--accent-green)' : 'var(--accent-red)', fontSize: '0.8rem', margin: 0 }}>
+                    {authError}
+                  </p>
+                )}
+
+                <button 
+                  type="submit" 
+                  className="gold-button" 
+                  style={{ width: '100%', marginTop: '10px' }}
+                  disabled={authLoading}
+                >
+                  {authLoading ? 'Processing...' : authMode === 'login' ? 'Sign In' : 'Sign Up'}
+                </button>
+
+                <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '0.8rem' }}>
+                  {authMode === 'login' ? (
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                      Don't have an account?{' '}
+                      <span onClick={() => { setAuthMode('signup'); setAuthError(''); }} style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}>
+                        Create one here
+                      </span>
+                    </p>
+                  ) : (
+                    <p style={{ color: 'var(--text-secondary)' }}>
+                      Already have an account?{' '}
+                      <span onClick={() => { setAuthMode('login'); setAuthError(''); }} style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}>
+                        Log in here
+                      </span>
+                    </p>
+                  )}
+                </div>
+
+              </form>
+            </div>
+          </div>
+        ) : (
+          /* Render Property Form once authenticated */
+          <div className="panel">
+            <div className="panel-header">
+              <h3 className="panel-title"><PlusIcon /> Add Your Property Listing</h3>
+            </div>
+            <div className="panel-content">
+              {formSubmitted ? (
+                <div style={{ padding: '40px 20px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontSize: '3rem', color: 'var(--accent-green)' }}>✓</span>
+                  <h4 style={{ marginTop: '15px' }}>Property Listed Successfully</h4>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '8px', maxWidth: '400px' }}>
+                    Your listing is now saved in the database. You can go to the "Browse Properties" tab to view it instantly.
+                  </p>
+                  <button 
+                    className="gold-button" 
+                    style={{ marginTop: '20px' }} 
+                    onClick={() => { setActiveSubTab('browse'); setFormSubmitted(false); }}
+                  >
+                    Go to Browse Properties
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleAddProperty} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                  
+                  <div className="form-group">
+                    <label>Listing Title</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="e.g. 3 BHK Gated Villa near budhawara Peta"
+                      value={formTitle}
+                      onChange={(e) => setFormTitle(e.target.value)}
+                      required 
+                    />
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Property Type</label>
+                      <CustomSelect 
+                        value={formType}
+                        onChange={setFormType}
+                        options={[
+                          { value: 'plot', label: 'Plot / Land Layout' },
+                          { value: 'villa', label: 'Villa / Independent House' },
+                          { value: 'apartment', label: 'Apartment / Flat' },
+                          { value: 'commercial', label: 'Commercial Space' }
+                        ]}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Orientation / Facing</label>
+                      <CustomSelect 
+                        value={formFacing}
+                        onChange={formFacing => setFormFacing(formFacing)}
+                        options={[
+                          { value: 'East', label: 'East Facing' },
+                          { value: 'West', label: 'West Facing' },
+                          { value: 'North', label: 'North Facing' },
+                          { value: 'South', label: 'South Facing' }
+                        ]}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label>Asking Price (INR)</label>
+                      <input 
+                        type="number" 
+                        className="form-input" 
+                        placeholder="e.g. 4500000"
+                        value={formPrice}
+                        onChange={(e) => setFormPrice(e.target.value)}
                         required 
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Contact Phone Number (WhatsApp preferred)</label>
+                      <label>Property Size (Sq. Ft. or Cents)</label>
                       <input 
-                        type="tel" 
+                        type="text" 
                         className="form-input" 
-                        placeholder="e.g. +918985961113"
-                        value={formContactPhone}
-                        onChange={(e) => setFormContactPhone(e.target.value)}
+                        placeholder="e.g. 1500 Sq. Ft. or 5 Cents"
+                        value={formSize}
+                        onChange={(e) => setFormSize(e.target.value)}
                         required 
                       />
                     </div>
                   </div>
-                </div>
 
-                <button 
-                  type="submit" 
-                  className="gold-button"
-                  style={{ alignSelf: 'flex-start', padding: '12px 30px', marginTop: '10px' }}
-                >
-                  Publish Listing Locally
-                </button>
+                  <div className="form-group">
+                    <label>Location Address / Landmark</label>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="e.g. Bellary Road, beside Union Bank, Kurnool"
+                      value={formLocation}
+                      onChange={(e) => setFormLocation(e.target.value)}
+                      required 
+                    />
+                  </div>
 
-              </form>
-            )}
+                  <div className="form-group">
+                    <label>Detailed Description</label>
+                    <textarea 
+                      className="form-input" 
+                      rows="4" 
+                      placeholder="Describe amenities, surroundings, road width, approvals, construction state..."
+                      value={formDescription}
+                      onChange={(e) => setFormDescription(e.target.value)}
+                    />
+                  </div>
+
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '15px', marginTop: '10px' }}>
+                    <h5 style={{ color: 'var(--accent-gold)', marginBottom: '15px' }}>Contact Information</h5>
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Contact Person Name</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          placeholder="Enter your name"
+                          value={formContactName}
+                          onChange={(e) => setFormContactName(e.target.value)}
+                          required 
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Contact Phone Number (WhatsApp preferred)</label>
+                        <input 
+                          type="tel" 
+                          className="form-input" 
+                          placeholder="e.g. +918985961113"
+                          value={formContactPhone}
+                          onChange={(e) => setFormContactPhone(e.target.value)}
+                          required 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {formError && (
+                    <p style={{ color: 'var(--accent-red)', fontSize: '0.85rem', margin: 0 }}>
+                      {formError}
+                    </p>
+                  )}
+
+                  <button 
+                    type="submit" 
+                    className="gold-button"
+                    style={{ alignSelf: 'flex-start', padding: '12px 30px', marginTop: '10px' }}
+                    disabled={formLoading}
+                  >
+                    {formLoading ? 'Publishing...' : 'Publish Listing'}
+                  </button>
+
+                </form>
+              )}
+            </div>
           </div>
-        </div>
+        )
       )}
 
     </div>
