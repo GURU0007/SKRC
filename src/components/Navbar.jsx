@@ -9,6 +9,7 @@ function Navbar({ activeTab, setActiveTab }) {
           Sri Krishna <span className="banner-subtitle">Real Estate & Constructions</span>
         </h1>
         <div className="banner-tagline">From Land to Landmark</div>
+        <div className="banner-phone">Cell: +91 8985961113</div>
       </div>
 
       {/* Navigation */}
