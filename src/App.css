@@ -588,15 +588,17 @@ textarea.form-input {
     width: 100%;
   }
   .nav-links {
-    flex-wrap: wrap;
-    padding: 8px 4px;
-    gap: 4px;
+    flex-wrap: nowrap;
+    padding: 6px 0;
+    gap: 3px;
+    justify-content: space-between;
   }
   .nav-tab-btn {
-    font-size: 0.75rem;
-    padding: 6px 10px;
-    flex: 1 1 auto;
+    font-size: 0.72rem;
+    padding: 8px 4px;
+    flex: 1;
     text-align: center;
+    white-space: nowrap;
   }
   .panel-header {
     padding: 10px 14px;
@@ -609,6 +611,13 @@ textarea.form-input {
   }
   .blueprint-header {
     font-size: 0.7rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .nav-tab-btn {
+    font-size: 0.64rem;
+    padding: 8px 1px;
   }
 }
 

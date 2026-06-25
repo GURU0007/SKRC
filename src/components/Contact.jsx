@@ -210,14 +210,29 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
               </div>
             </div>
 
-            <div className="panel" style={{ padding: '16px', background: 'rgba(197,168,128,0.02)' }}>
-              <h5 style={{ color: 'var(--accent-gold)' }}>Consultation Process:</h5>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', lineHeight: '1.4', marginTop: '6px' }}>
-                1. Initial document scan & land topography review.<br/>
-                2. Unbundled material structural costing.<br/>
-                3. Plan approvals (HMDA/GHMC alignment).<br/>
-                4. Civil contracting and delivery timeline commitment.
-              </p>
+            <div className="panel" style={{ padding: '16px', background: 'rgba(197,168,128,0.02)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <h5 style={{ color: 'var(--accent-gold)' }}>Office Location & Directions:</h5>
+              <div style={{ width: '100%', height: '150px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
+                <iframe 
+                  title="Office Location Map"
+                  width="100%" 
+                  height="100%" 
+                  src="https://maps.google.com/maps?q=Sri%20Krishna%20Real%20Estate%20and%20constructions,%20Kurnool&t=&z=17&ie=UTF8&iwloc=&output=embed" 
+                  frameBorder="0" 
+                  scrolling="no" 
+                  marginHeight="0" 
+                  marginWidth="0"
+                ></iframe>
+              </div>
+              <a 
+                href="https://www.google.com/maps/place/Sri+Krishna+Real+Estate+and+constructions/@15.8248931,78.0251376,20z/data=!4m6!3m5!1s0x3bb5e7fc9d3ec739:0xe1c8cbe8a6be65ee!8m2!3d15.8248931!4d78.0251376!16s%2Fg%2F11n4spxvf9" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="gold-button"
+                style={{ display: 'inline-block', textDecoration: 'none', textAlign: 'center', fontSize: '0.8rem', padding: '8px 16px' }}
+              >
+                Get Directions on Google Maps
+              </a>
             </div>
           </div>
 
