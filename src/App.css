@@ -32,6 +32,23 @@
   position: relative;
 }
 
+.top-auth-header {
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  z-index: 100;
+}
+
+@media (max-width: 600px) {
+  .top-auth-header {
+    position: static;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
 .banner-title {
   font-family: 'Cinzel Decorative', serif;
   font-size: 2.1rem;

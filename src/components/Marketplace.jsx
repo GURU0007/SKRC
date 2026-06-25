@@ -163,14 +163,11 @@ const PlusIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 );
 
-function Marketplace() {
+function Marketplace({ user, setUser }) {
   const [activeSubTab, setActiveSubTab] = useState('browse'); // 'browse' or 'list'
   const [listings, setListings] = useState([]);
   const [selectedProp, setSelectedProp] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Authentication State
-  const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState('login'); // 'login' or 'signup'
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -199,27 +196,13 @@ function Marketplace() {
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
 
-  // 1. Get Authentication State from Supabase
+  // 1. Pre-fill listing contact details when user changes
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        // Pre-fill listing contact details with user metadata if logged in
-        setFormContactName(session.user.user_metadata?.name || '');
-        setFormContactPhone(session.user.user_metadata?.phone || '');
-      }
-    });
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        setFormContactName(session.user.user_metadata?.name || '');
-        setFormContactPhone(session.user.user_metadata?.phone || '');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    if (user) {
+      setFormContactName(user.user_metadata?.name || '');
+      setFormContactPhone(user.user_metadata?.phone || '');
+    }
+  }, [user]);
 
   // 2. Fetch Listings (Supabase with Local Fallback)
   const fetchProperties = async () => {
@@ -332,10 +315,7 @@ function Marketplace() {
     setAuthLoading(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-  };
+
 
   const handleGoogleSignIn = async () => {
     setAuthError('');
@@ -521,38 +501,21 @@ function Marketplace() {
       )}
 
       {/* Tab Switcher Headers */}
-      <div className="panel" style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.1)' }}>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button 
-            className={`filter-btn ${activeSubTab === 'browse' ? 'active' : ''}`}
-            onClick={() => { setActiveSubTab('browse'); setFormSubmitted(false); }}
-            style={{ fontSize: '0.85rem', padding: '8px 16px' }}
-          >
-            Browse Properties
-          </button>
-          <button 
-            className={`filter-btn ${activeSubTab === 'list' ? 'active' : ''}`}
-            onClick={() => setActiveSubTab('list')}
-            style={{ fontSize: '0.85rem', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            <PlusIcon /> List Your Property
-          </button>
-        </div>
-        
-        {user ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '0.75rem', color: 'var(--accent-gold)', fontWeight: '600' }}>
-              👤 {user.email}
-            </span>
-            <button onClick={handleLogout} className="filter-btn" style={{ fontSize: '0.7rem', padding: '4px 8px', borderColor: 'var(--accent-red)', color: 'var(--accent-red)' }}>
-              Sign Out
-            </button>
-          </div>
-        ) : (
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-            Sign in required to list properties
-          </span>
-        )}
+      <div className="panel" style={{ padding: '8px 12px', display: 'flex', gap: '6px', background: 'rgba(0,0,0,0.1)' }}>
+        <button 
+          className={`filter-btn ${activeSubTab === 'browse' ? 'active' : ''}`}
+          onClick={() => { setActiveSubTab('browse'); setFormSubmitted(false); }}
+          style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+        >
+          Browse Properties
+        </button>
+        <button 
+          className={`filter-btn ${activeSubTab === 'list' ? 'active' : ''}`}
+          onClick={() => setActiveSubTab('list')}
+          style={{ fontSize: '0.85rem', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          <PlusIcon /> List Your Property
+        </button>
       </div>
 
       {activeSubTab === 'browse' ? (

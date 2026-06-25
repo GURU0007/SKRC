@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
+import { supabase } from './supabaseClient';
 
 // Import local components
 import Navbar from './components/Navbar';
@@ -25,6 +26,24 @@ const PhoneIcon = () => (
 function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [prefilledPlot, setPrefilledPlot] = useState('');
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
 
   // Handle routing plot selection inquiry directly to the contact tab
   const handleSelectPlotInquiry = (plotNumber) => {
@@ -35,7 +54,7 @@ function App() {
   return (
     <div className="app-container">
       {/* Brand Navbar */}
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout} />
 
       {/* Corporate Hero Banner */}
       <Hero />
@@ -106,7 +125,7 @@ function App() {
 
         {/* Tab 4: Property Marketplace */}
         {activeTab === 'marketplace' && (
-          <Marketplace />
+          <Marketplace user={user} setUser={setUser} />
         )}
 
         {/* Tab 5: Contact Booking Request */}
