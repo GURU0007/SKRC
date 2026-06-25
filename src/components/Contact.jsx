@@ -20,17 +20,65 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
   const [type, setType] = useState(prefilledPlot ? 'plot-booking' : 'construction');
   const [message, setMessage] = useState(prefilledPlot ? `I am interested in inquiring about Plot Layout Booking for Plot: ${prefilledPlot}` : '');
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name || !phone) return;
-    setSubmitted(true);
+    
+    setIsSubmitting(true);
+    setErrorMsg('');
+
+    // Web3Forms Access Token Setup:
+    // To enable email alerts, register your email at https://web3forms.com
+    // And paste the access key below (e.g. "a1b2c3d4-e5f6...")
+    const accessKey = "d7754fef-60e5-4c01-80c5-000588d927ce"; 
+
+    if (accessKey === "YOUR_ACCESS_KEY_HERE") {
+      console.warn("Web3Forms Access Key is not configured. Simulating success message.");
+      setTimeout(() => {
+        setSubmitted(true);
+        setIsSubmitting(false);
+      }, 800);
+      return;
+    }
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          access_key: accessKey,
+          name: name,
+          email: email,
+          phone: phone,
+          inquiry_type: type,
+          message: message
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSubmitted(true);
+      } else {
+        setErrorMsg("Failed to send inquiry. Please check details and try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg("Network error. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="panel full-width-card">
       <div className="panel-header">
-        <h3 className="panel-title"><PhoneIcon /> Request Consultation & Quote</h3>
+        <h3 className="panel-title"><PhoneIcon /> Contact Us</h3>
         <span className="brand-tagline">Sri Krishna Client Relations</span>
       </div>
       <div className="panel-content">
@@ -90,7 +138,7 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
                 <label>Inquiry Type</label>
                 <select className="form-input" value={type} onChange={(e) => setType(e.target.value)}>
                   <option value="construction">Residential/Commercial Construction Quote</option>
-                  <option value="plot-booking">Plot Booking / Purchase (Sri Krishna Enclave)</option>
+                  <option value="plot-booking">Plot Booking / Purchase (SriKrishna X1)</option>
                   <option value="legal">Legal title verification / Approvals</option>
                 </select>
               </div>
@@ -119,8 +167,19 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
                 />
               </div>
 
-              <button type="submit" className="gold-button" style={{ alignSelf: 'flex-start', padding: '12px 28px' }}>
-                Submit Request
+              {errorMsg && (
+                <p style={{ color: 'var(--accent-red)', fontSize: '0.85rem', marginBottom: '15px' }}>
+                  {errorMsg}
+                </p>
+              )}
+
+              <button 
+                type="submit" 
+                className="gold-button" 
+                style={{ alignSelf: 'flex-start', padding: '12px 28px' }}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit Request'}
               </button>
             </form>
           )}

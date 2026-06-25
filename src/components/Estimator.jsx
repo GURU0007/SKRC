@@ -12,9 +12,9 @@ function Estimator() {
 
   // Estimation multiplier details
   const getQualityMultiplier = () => {
-    if (quality === 'basic') return 1450;
-    if (quality === 'luxury') return 2250;
-    return 1800; // premium
+    if (quality === 'basic') return 2000;  // Normal Construction: 2000/-sqft
+    if (quality === 'luxury') return 3200; // Ultra Deluxe: 3200/-sqft
+    return 2400;                           // Deluxe: 2400/-sqft
   };
 
   const calculateEstimate = () => {
@@ -89,16 +89,16 @@ function Estimator() {
             </div>
 
             <div className="form-group">
-              <label>Material Specifications Quality Grade</label>
+              <label>Material Specifications & Quality Grade</label>
               <select className="form-input" value={quality} onChange={(e) => setQuality(e.target.value)}>
-                <option value="basic">Standard Basic (Grade-43 Cement, Fe-415 Steel)</option>
-                <option value="premium">Premium Quality (Coromandel Cement, Fe-550 TMT Steel)</option>
-                <option value="luxury">Ultra Luxury Elite (Ultratech, Tata Tiscon TMT Steel, Italian marbles)</option>
+                <option value="basic">Normal Construction (₹2,000 / Sq. Ft.)</option>
+                <option value="premium">Deluxe - Lappam, False Ceiling (₹2,400 / Sq. Ft.)</option>
+                <option value="luxury">Ultra Deluxe - Cupboards, Solar, Smart Home (₹3,200 / Sq. Ft.)</option>
               </select>
             </div>
             
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4', background: '#1c2436', padding: '10px', borderRadius: '4px', marginTop: '10px' }}>
-              <strong>Disclaimer:</strong> Estimations are calculated dynamically based on regional materials indices for South India. Exact figures may vary depending on local authority permits and structural layouts.
+              <strong>Standard Materials Specs:</strong> Cement (Ultratech or similar), Steel Reinforcements (Tata, Vizag or similar), and Lightweight / Clay bricks are used as default baselines to calculate construction structures.
             </p>
           </div>
 
@@ -116,7 +116,7 @@ function Estimator() {
               {/* Cement bags */}
               <div className="material-item">
                 <div className="material-meta">
-                  <span>Cement (Ultratech/Coromandel)</span>
+                  <span>Cement (Ultratech or similar)</span>
                   <span>{formatCurrency(est.cement)} (approx. {Math.round((area * floors) * 0.4)} bags)</span>
                 </div>
                 <div className="material-bar-outer">
@@ -127,7 +127,7 @@ function Estimator() {
               {/* Steel tons */}
               <div className="material-item">
                 <div className="material-meta">
-                  <span>TMT Steel Reinforcements (Tata/Vizag)</span>
+                  <span>TMT Steel (Tata / Vizag or similar)</span>
                   <span>{formatCurrency(est.steel)} (approx. {((area * floors) * 0.0035).toFixed(1)} Tons)</span>
                 </div>
                 <div className="material-bar-outer">
@@ -149,7 +149,7 @@ function Estimator() {
               {/* Bricks */}
               <div className="material-item">
                 <div className="material-meta">
-                  <span>Clay Bricks / Solid Blocks</span>
+                  <span>Lightweight / Clay Bricks</span>
                   <span>{formatCurrency(est.bricks)} (approx. {Math.round((area * floors) * 12)} pcs)</span>
                 </div>
                 <div className="material-bar-outer">

@@ -14,8 +14,8 @@ function Hero() {
             <span className="stat-lbl">Industry Legacy</span>
           </div>
           <div className="stat-item">
-            <span className="stat-val">250+ Homes</span>
-            <span className="stat-lbl">Built & Handed Over</span>
+            <span className="stat-val">Smart & Green</span>
+            <span className="stat-lbl">Energy Homes</span>
           </div>
           <div className="stat-item">
             <span className="stat-val">100% Clear</span>

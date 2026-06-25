@@ -35,7 +35,7 @@ function Navbar({ activeTab, setActiveTab }) {
           className={`nav-tab-btn ${activeTab === 'contact' ? 'active' : ''}`} 
           onClick={() => setActiveTab('contact')}
         >
-          Request Quote
+          Contact Us
         </button>
       </nav>
     </header>
