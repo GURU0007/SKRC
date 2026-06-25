@@ -111,9 +111,9 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
                 />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <div className="form-row">
                 <div className="form-group">
-                  <label>Contact Phone Number</label>
+                  <label>Phone Number</label>
                   <input 
                     type="tel" 
                     className="form-input" 
@@ -124,7 +124,7 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
                   />
                 </div>
                 <div className="form-group">
-                  <label>Email Address (Optional)</label>
+                  <label>Email (Optional)</label>
                   <input 
                     type="email" 
                     className="form-input" 
