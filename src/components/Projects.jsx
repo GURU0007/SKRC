@@ -1,27 +1,37 @@
 import React, { useState } from 'react';
 
+// Icons
+const CompassIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+);
+
 const PLOTS = [
-  { id: 1, number: "P-01", cents: 5.0, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
-  { id: 2, number: "P-02", cents: 5.0, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
-  { id: 3, number: "P-03", cents: 5.0, status: "sold", orientation: "North-Facing", ratePerCent: 180000 },
-  { id: 4, number: "P-04", cents: 5.0, status: "available", orientation: "North-Facing", ratePerCent: 180000 },
-  { id: 5, number: "P-05", cents: 5.0, status: "available", orientation: "West-Facing", ratePerCent: 180000 },
-  { id: 6, number: "P-06", cents: 5.0, status: "sold", orientation: "West-Facing", ratePerCent: 180000 },
-  { id: 7, number: "P-07", cents: 5.0, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
-  { id: 8, number: "P-08", cents: 5.0, status: "sold", orientation: "East-Facing", ratePerCent: 180000 },
-  { id: 9, number: "P-09", cents: 5.0, status: "available", orientation: "South-Facing", ratePerCent: 180000 },
-  { id: 10, number: "P-10", cents: 5.0, status: "available", orientation: "South-Facing", ratePerCent: 180000 },
-  { id: 11, number: "P-11", cents: 5.0, status: "available", orientation: "North-Facing", ratePerCent: 180000 },
-  { id: 12, number: "P-12", cents: 5.0, status: "sold", orientation: "North-Facing", ratePerCent: 180000 },
-  { id: 13, number: "P-13", cents: 5.0, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
-  { id: 14, number: "P-14", cents: 5.0, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
-  { id: 15, number: "P-15", cents: 5.0, status: "sold", orientation: "West-Facing", ratePerCent: 180000 },
-  { id: 16, number: "P-16", cents: 5.0, status: "available", orientation: "West-Facing", ratePerCent: 180000 },
-  { id: 17, number: "P-17", cents: 5.0, status: "available", orientation: "North-Facing", ratePerCent: 180000 },
-  { id: 18, number: "P-18", cents: 5.0, status: "sold", orientation: "North-Facing", ratePerCent: 180000 },
-  { id: 19, number: "P-19", cents: 5.0, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
-  { id: 20, number: "P-20", cents: 5.0, status: "sold", orientation: "East-Facing", ratePerCent: 180000 },
-  { id: 21, number: "P-21", cents: 6.0, status: "available", orientation: "North-East (Corner)", ratePerCent: 180000 } // 21st plot is a 6 cent corner plot
+  // 1: 30*46 (1)
+  { id: 1, number: "P-01", width: 30, length: 46, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  // 2: 36*56 (2)
+  { id: 2, number: "P-02", width: 36, length: 56, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  // 3-19: 36*52 (3-19)
+  { id: 3, number: "P-03", width: 36, length: 52, status: "sold", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 4, number: "P-04", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 5, number: "P-05", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 6, number: "P-06", width: 36, length: 52, status: "sold", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 7, number: "P-07", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 8, number: "P-08", width: 36, length: 52, status: "sold", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 9, number: "P-09", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 10, number: "P-10", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 11, number: "P-11", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 12, number: "P-12", width: 36, length: 52, status: "sold", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 13, number: "P-13", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 14, number: "P-14", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 15, number: "P-15", width: 36, length: 52, status: "sold", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 16, number: "P-16", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 17, number: "P-17", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 18, number: "P-18", width: 36, length: 52, status: "sold", orientation: "East-Facing", ratePerCent: 180000 },
+  { id: 19, number: "P-19", width: 36, length: 52, status: "available", orientation: "East-Facing", ratePerCent: 180000 },
+  // 20: 49*50 (20)
+  { id: 20, number: "P-20", width: 49, length: 50, status: "sold", orientation: "East-Facing", ratePerCent: 180000 },
+  // 21: 17.5*49 (21)
+  { id: 21, number: "P-21", width: 17.5, length: 49, status: "available", orientation: "East-Facing", ratePerCent: 180000 }
 ];
 
 function Projects({ handleSelectPlotInquiry }) {
@@ -39,6 +49,15 @@ function Projects({ handleSelectPlotInquiry }) {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(num);
+  };
+
+  // Helper calculation details for chosen plot
+  const calculateCents = (plot) => {
+    return (plot.width * plot.length) / 435.6;
+  };
+
+  const getCentsDisplay = (plot) => {
+    return calculateCents(plot).toFixed(2);
   };
 
   return (
@@ -97,12 +116,20 @@ function Projects({ handleSelectPlotInquiry }) {
                       <span>Byluppala, Kurnool</span>
                     </div>
                     <div className="detail-row">
-                      <span>Land Area:</span>
-                      <span>{selectedPlot.cents.toFixed(1)} Cents</span>
+                      <span>Dimensions:</span>
+                      <span style={{ fontWeight: '600', color: '#fff' }}>
+                        {selectedPlot.width} × {selectedPlot.length} Ft
+                      </span>
                     </div>
                     <div className="detail-row">
-                      <span>Approx. Sq. Ft.:</span>
-                      <span>{Math.round(selectedPlot.cents * 435.6)} Sq. Ft.</span>
+                      <span>Total Area:</span>
+                      <span>{selectedPlot.width * selectedPlot.length} Sq. Ft.</span>
+                    </div>
+                    <div className="detail-row">
+                      <span>Land Area (Cents):</span>
+                      <span style={{ fontWeight: '600', color: 'var(--accent-gold)' }}>
+                        {getCentsDisplay(selectedPlot)} Cents
+                      </span>
                     </div>
                     <div className="detail-row">
                       <span>Orientation:</span>
@@ -115,7 +142,7 @@ function Projects({ handleSelectPlotInquiry }) {
                     <div className="detail-row" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '10px', marginTop: '15px' }}>
                       <span style={{ fontWeight: '700', color: 'var(--accent-gold)' }}>Total Plot Value:</span>
                       <span style={{ fontWeight: '700', color: 'var(--accent-gold)' }}>
-                        {formatCurrency(selectedPlot.cents * selectedPlot.ratePerCent)}
+                        {formatCurrency(calculateCents(selectedPlot) * selectedPlot.ratePerCent)}
                       </span>
                     </div>
                   </>

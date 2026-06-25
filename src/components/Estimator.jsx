@@ -6,9 +6,12 @@ const CalculatorIcon = () => (
 );
 
 function Estimator() {
-  const [area, setArea] = useState(1500); // 1500 sqft default
+  const [area, setArea] = useState('1500'); // Initialized as string to allow clearing
   const [floors, setFloors] = useState(1);
   const [quality, setQuality] = useState('premium'); // basic, premium, luxury
+
+  // Convert to number for calculations, default to 0 if cleared
+  const areaNum = Number(area) || 0;
 
   // Estimation multiplier details
   const getQualityMultiplier = () => {
@@ -18,7 +21,7 @@ function Estimator() {
   };
 
   const calculateEstimate = () => {
-    const totalArea = area * floors;
+    const totalArea = areaNum * floors;
     const baseCost = totalArea * getQualityMultiplier();
     
     // Unbundled material costs breakdown
@@ -57,6 +60,12 @@ function Estimator() {
     }).format(num);
   };
 
+  // Safe divisor check for average cost display
+  const getAverageCostDisplay = () => {
+    if (areaNum === 0) return formatCurrency(0);
+    return formatCurrency(est.total / (areaNum * floors));
+  };
+
   return (
     <div className="panel full-width-card">
       <div className="panel-header">
@@ -73,8 +82,9 @@ function Estimator() {
               <input 
                 type="number" 
                 className="form-input" 
+                placeholder="e.g. 1500"
                 value={area}
-                onChange={(e) => setArea(Number(e.target.value))}
+                onChange={(e) => setArea(e.target.value)} // Binds as string, allows clearing the box
               />
             </div>
 
@@ -108,7 +118,7 @@ function Estimator() {
               <span className="cost-num-sub">Total Construction Estimate Budget:</span>
               <div className="cost-num-big" style={{ color: 'var(--accent-gold)' }}>{formatCurrency(est.total)}</div>
               <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                Average Cost: {formatCurrency(est.total / (area * floors))} per Sq. Ft.
+                Average Cost: {getAverageCostDisplay()} per Sq. Ft.
               </span>
             </div>
 
@@ -117,7 +127,7 @@ function Estimator() {
               <div className="material-item">
                 <div className="material-meta">
                   <span>Cement (Ultratech or similar)</span>
-                  <span>{formatCurrency(est.cement)} (approx. {Math.round((area * floors) * 0.4)} bags)</span>
+                  <span>{formatCurrency(est.cement)} (approx. {Math.round(areaNum * floors * 0.4)} bags)</span>
                 </div>
                 <div className="material-bar-outer">
                   <div className="material-bar-inner" style={{ width: '16%' }}></div>
@@ -128,7 +138,7 @@ function Estimator() {
               <div className="material-item">
                 <div className="material-meta">
                   <span>TMT Steel (Tata / Vizag or similar)</span>
-                  <span>{formatCurrency(est.steel)} (approx. {((area * floors) * 0.0035).toFixed(1)} Tons)</span>
+                  <span>{formatCurrency(est.steel)} (approx. {(areaNum * floors * 0.0035).toFixed(1)} Tons)</span>
                 </div>
                 <div className="material-bar-outer">
                   <div className="material-bar-inner" style={{ width: '20%' }}></div>
@@ -139,7 +149,7 @@ function Estimator() {
               <div className="material-item">
                 <div className="material-meta">
                   <span>Fine Sand & Coarse Aggregate</span>
-                  <span>{formatCurrency(est.sand)} (approx. {Math.round((area * floors) * 1.5)} CFT)</span>
+                  <span>{formatCurrency(est.sand)} (approx. {Math.round(areaNum * floors * 1.5)} CFT)</span>
                 </div>
                 <div className="material-bar-outer">
                   <div className="material-bar-inner" style={{ width: '14%' }}></div>
@@ -150,7 +160,7 @@ function Estimator() {
               <div className="material-item">
                 <div className="material-meta">
                   <span>Lightweight / Clay Bricks</span>
-                  <span>{formatCurrency(est.bricks)} (approx. {Math.round((area * floors) * 12)} pcs)</span>
+                  <span>{formatCurrency(est.bricks)} (approx. {Math.round(areaNum * floors * 12)} pcs)</span>
                 </div>
                 <div className="material-bar-outer">
                   <div className="material-bar-inner" style={{ width: '12%' }}></div>
