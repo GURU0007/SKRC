@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import CustomSelect from './CustomSelect';
 
 // Icons
 const PhoneIcon = () => (
@@ -136,11 +137,15 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
 
               <div className="form-group">
                 <label>Inquiry Type</label>
-                <select className="form-input" value={type} onChange={(e) => setType(e.target.value)}>
-                  <option value="construction">Residential/Commercial Construction Quote</option>
-                  <option value="plot-booking">Plot Booking / Purchase (SriKrishna X1)</option>
-                  <option value="legal">Legal title verification / Approvals</option>
-                </select>
+                <CustomSelect 
+                  value={type} 
+                  onChange={setType} 
+                  options={[
+                    { value: 'construction', label: 'Residential/Commercial Construction Quote' },
+                    { value: 'plot-booking', label: 'Plot Booking / Purchase (SriKrishna X1)' },
+                    { value: 'legal', label: 'Legal title verification / Approvals' }
+                  ]}
+                />
               </div>
 
               {type === 'plot-booking' && (

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import CustomSelect from './CustomSelect';
 
 // Icons
 const CalculatorIcon = () => (
@@ -90,21 +91,29 @@ function Estimator() {
 
             <div className="form-group">
               <label>Number of Floors (Stories)</label>
-              <select className="form-input" value={floors} onChange={(e) => setFloors(Number(e.target.value))}>
-                <option value={1}>G (Ground Floor Only)</option>
-                <option value={2}>G + 1 (Double Story)</option>
-                <option value={3}>G + 2 (Triple Story)</option>
-                <option value={4}>G + 3 (Four Story)</option>
-              </select>
+              <CustomSelect 
+                value={floors} 
+                onChange={(val) => setFloors(Number(val))} 
+                options={[
+                  { value: 1, label: 'G (Ground Floor Only)' },
+                  { value: 2, label: 'G + 1 (Double Story)' },
+                  { value: 3, label: 'G + 2 (Triple Story)' },
+                  { value: 4, label: 'G + 3 (Four Story)' }
+                ]}
+              />
             </div>
 
             <div className="form-group">
               <label>Material Specifications & Quality Grade</label>
-              <select className="form-input" value={quality} onChange={(e) => setQuality(e.target.value)}>
-                <option value="basic">Normal Construction (₹2,000 / Sq. Ft.)</option>
-                <option value="premium">Deluxe - Lappam, False Ceiling (₹2,400 / Sq. Ft.)</option>
-                <option value="luxury">Ultra Deluxe - Cupboards, Solar, Smart Home (₹3,200 / Sq. Ft.)</option>
-              </select>
+              <CustomSelect 
+                value={quality} 
+                onChange={setQuality} 
+                options={[
+                  { value: 'basic', label: 'Normal Construction (₹2,000 / Sq. Ft.)' },
+                  { value: 'premium', label: 'Deluxe - Lappam, False Ceiling (₹2,400 / Sq. Ft.)' },
+                  { value: 'luxury', label: 'Ultra Deluxe - Cupboards, Solar, Smart Home (₹3,200 / Sq. Ft.)' }
+                ]}
+              />
             </div>
             
             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', lineHeight: '1.4', background: '#1c2436', padding: '10px', borderRadius: '4px', marginTop: '10px' }}>
