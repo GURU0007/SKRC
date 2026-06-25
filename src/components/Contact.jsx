@@ -198,7 +198,7 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
               <span className="info-icon-wrapper"><MailIcon /></span>
               <div className="info-meta">
                 <h5>Official Email ID</h5>
-                <p>contact@srikrishnaconstructions.com</p>
+                <p>contact.srikrishnarealestate@gmail.com</p>
               </div>
             </div>
 
