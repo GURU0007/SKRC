@@ -129,6 +129,21 @@ function App() {
         {activeTab === 'home' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
             
+            {/* Property Marketplace Preview */}
+            <div className="panel">
+              <div className="panel-header">
+                <h3 className="panel-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> Property Marketplace</h3>
+              </div>
+              <div className="panel-content">
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '15px' }}>
+                  Browse premium local listings or list your own plots, villas, apartments, and commercial spaces. Connect directly with owners via WhatsApp.
+                </p>
+                <button className="gold-button" style={{ width: '100%' }} onClick={() => setActiveTab('marketplace')}>
+                  Explore Marketplace
+                </button>
+              </div>
+            </div>
+
             {/* Interactive Plots Overview Preview */}
             <div className="panel">
               <div className="panel-header">
@@ -155,21 +170,6 @@ function App() {
                 </p>
                 <button className="gold-button" style={{ width: '100%' }} onClick={() => setActiveTab('estimator')}>
                   Calculate Construction Budget
-                </button>
-              </div>
-            </div>
-
-            {/* Property Marketplace Preview */}
-            <div className="panel">
-              <div className="panel-header">
-                <h3 className="panel-title"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> Property Marketplace</h3>
-              </div>
-              <div className="panel-content">
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '15px' }}>
-                  Browse premium local listings or list your own plots, villas, apartments, and commercial spaces. Connect directly with owners via WhatsApp.
-                </p>
-                <button className="gold-button" style={{ width: '100%' }} onClick={() => setActiveTab('marketplace')}>
-                  Explore Marketplace
                 </button>
               </div>
             </div>
