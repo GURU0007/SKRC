@@ -257,7 +257,9 @@ function Marketplace({ user, setUser, setActiveTab }) {
     e.preventDefault();
     if (!editTitle || !editPrice || !editSize || !editLocation || !editContactPhone || !editContactName) return;
 
-    if (isSupabaseConfigured && user) {
+    const isDefaultProp = typeof selectedProp.id === 'string' && selectedProp.id.startsWith('prop-');
+
+    if (isSupabaseConfigured && user && !isDefaultProp) {
       try {
         const { error } = await supabase
           .from('properties')
@@ -297,48 +299,86 @@ function Marketplace({ user, setUser, setActiveTab }) {
         alert(err.message || 'Failed to update listing.');
       }
     } else {
-      // Local storage edit save
-      const saved = localStorage.getItem('sri_krishna_marketplace_listings');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          const updated = parsed.map(p => {
-            if (p.id === selectedProp.id) {
-              return {
-                ...p,
-                title: editTitle,
-                type: editType,
-                price: Number(editPrice),
-                size: editSize,
-                facing: editFacing,
-                location: editLocation,
-                description: editDescription,
-                contactName: editContactName,
-                contactPhone: editContactPhone,
-                image: editImage
-              };
-            }
-            return p;
-          });
-          localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(updated));
-          
-          const updatedProp = {
-            ...selectedProp,
-            title: editTitle,
-            type: editType,
-            price: Number(editPrice),
-            size: editSize,
-            facing: editFacing,
-            location: editLocation,
-            description: editDescription,
-            contactName: editContactName,
-            contactPhone: editContactPhone,
-            image: editImage
-          };
-          setSelectedProp(updatedProp);
-          setIsEditing(false);
-          setListings([...DEFAULT_PROPERTIES.map(p => ({ ...p, approved: true })), ...updated]);
-        } catch (err) {}
+      if (isDefaultProp) {
+        // Save edit to edited defaults list in localStorage
+        const editedSaved = localStorage.getItem('sri_krishna_edited_defaults');
+        let editedDefaults = [];
+        if (editedSaved) {
+          try {
+            editedDefaults = JSON.parse(editedSaved);
+          } catch (e) {}
+        }
+        
+        const newEdit = {
+          id: selectedProp.id,
+          title: editTitle,
+          type: editType,
+          price: Number(editPrice),
+          size: editSize,
+          facing: editFacing,
+          location: editLocation,
+          description: editDescription,
+          contactName: editContactName,
+          contactPhone: editContactPhone,
+          image: editImage
+        };
+
+        // Replace existing edit or add new
+        editedDefaults = editedDefaults.filter(ed => ed.id !== selectedProp.id);
+        editedDefaults.push(newEdit);
+        localStorage.setItem('sri_krishna_edited_defaults', JSON.stringify(editedDefaults));
+
+        const updatedProp = {
+          ...selectedProp,
+          ...newEdit
+        };
+        setSelectedProp(updatedProp);
+        setIsEditing(false);
+        fetchProperties();
+      } else {
+        // Local storage edit save
+        const saved = localStorage.getItem('sri_krishna_marketplace_listings');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            const updated = parsed.map(p => {
+              if (p.id === selectedProp.id) {
+                return {
+                  ...p,
+                  title: editTitle,
+                  type: editType,
+                  price: Number(editPrice),
+                  size: editSize,
+                  facing: editFacing,
+                  location: editLocation,
+                  description: editDescription,
+                  contactName: editContactName,
+                  contactPhone: editContactPhone,
+                  image: editImage
+                };
+              }
+              return p;
+            });
+            localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(updated));
+            
+            const updatedProp = {
+              ...selectedProp,
+              title: editTitle,
+              type: editType,
+              price: Number(editPrice),
+              size: editSize,
+              facing: editFacing,
+              location: editLocation,
+              description: editDescription,
+              contactName: editContactName,
+              contactPhone: editContactPhone,
+              image: editImage
+            };
+            setSelectedProp(updatedProp);
+            setIsEditing(false);
+            setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...updated]);
+          } catch (err) {}
+        }
       }
     }
   };
@@ -383,6 +423,31 @@ function Marketplace({ user, setUser, setActiveTab }) {
     }
   }, [user]);
 
+  const getProcessedDefaults = () => {
+    const deletedSaved = localStorage.getItem('sri_krishna_deleted_defaults');
+    let deletedDefaults = [];
+    if (deletedSaved) {
+      try {
+        deletedDefaults = JSON.parse(deletedSaved);
+      } catch (e) {}
+    }
+
+    const editedSaved = localStorage.getItem('sri_krishna_edited_defaults');
+    let editedDefaults = [];
+    if (editedSaved) {
+      try {
+        editedDefaults = JSON.parse(editedSaved);
+      } catch (e) {}
+    }
+
+    return DEFAULT_PROPERTIES
+      .filter(p => !deletedDefaults.includes(p.id))
+      .map(p => {
+        const edit = editedDefaults.find(ed => ed.id === p.id);
+        return edit ? { ...p, ...edit } : p;
+      });
+  };
+
   // 2. Fetch Listings (Supabase with Local Fallback)
   const fetchProperties = async () => {
     setIsLoading(true);
@@ -414,7 +479,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           approved: item.approved
         }));
 
-        setListings([...DEFAULT_PROPERTIES.map(p => ({ ...p, approved: true })), ...dbListings]);
+        setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...dbListings]);
       } catch (err) {
         console.error('Failed to load from Supabase database. Falling back to local.', err);
         loadLocalFallbacks();
@@ -426,16 +491,17 @@ function Marketplace({ user, setUser, setActiveTab }) {
   };
 
   const loadLocalFallbacks = () => {
+    const processedDefaults = getProcessedDefaults();
     const saved = localStorage.getItem('sri_krishna_marketplace_listings');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setListings([...DEFAULT_PROPERTIES.map(p => ({ ...p, approved: true })), ...parsed]);
+        setListings([...processedDefaults.map(p => ({ ...p, approved: true })), ...parsed]);
       } catch (e) {
-        setListings(DEFAULT_PROPERTIES.map(p => ({ ...p, approved: true })));
+        setListings(processedDefaults.map(p => ({ ...p, approved: true })));
       }
     } else {
-      setListings(DEFAULT_PROPERTIES.map(p => ({ ...p, approved: true })));
+      setListings(processedDefaults.map(p => ({ ...p, approved: true })));
     }
   };
 
@@ -517,7 +583,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
       
       const updatedSaved = [newProperty, ...currentSaved];
       localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(updatedSaved));
-      setListings([...DEFAULT_PROPERTIES.map(p => ({ ...p, approved: true })), ...updatedSaved]);
+      setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...updatedSaved]);
       setFormSubmitted(true);
     }
     
@@ -537,7 +603,9 @@ function Marketplace({ user, setUser, setActiveTab }) {
     if (!window.confirm('Are you sure you want to delete this listing?')) return;
     
     const isAdmin = user && user.email === 'reddygarigsr@gmail.com';
-    if (isSupabaseConfigured && user) {
+    const isDefaultProp = typeof propId === 'string' && propId.startsWith('prop-');
+
+    if (isSupabaseConfigured && user && !isDefaultProp) {
       try {
         const query = supabase
           .from('properties')
@@ -557,22 +625,39 @@ function Marketplace({ user, setUser, setActiveTab }) {
         alert(err.message || 'Failed to delete listing.');
       }
     } else {
-      // Local storage delete
-      const saved = localStorage.getItem('sri_krishna_marketplace_listings');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          const filtered = parsed.filter(p => {
-            if (p.id === propId) {
-              // Delete only if admin or if the user is the owner
-              return !isAdmin && p.user_id !== user?.id;
-            }
-            return true;
-          });
-          localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(filtered));
-          setListings([...DEFAULT_PROPERTIES.map(p => ({ ...p, approved: true })), ...filtered]);
-          setSelectedProp(null);
-        } catch (err) {}
+      if (isDefaultProp) {
+        // Save deletion to localStorage for default properties
+        const deletedSaved = localStorage.getItem('sri_krishna_deleted_defaults');
+        let deletedDefaults = [];
+        if (deletedSaved) {
+          try {
+            deletedDefaults = JSON.parse(deletedSaved);
+          } catch (e) {}
+        }
+        if (!deletedDefaults.includes(propId)) {
+          deletedDefaults.push(propId);
+          localStorage.setItem('sri_krishna_deleted_defaults', JSON.stringify(deletedDefaults));
+        }
+        setSelectedProp(null);
+        fetchProperties();
+      } else {
+        // Local storage delete for custom properties
+        const saved = localStorage.getItem('sri_krishna_marketplace_listings');
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            const filtered = parsed.filter(p => {
+              if (p.id === propId) {
+                // Delete only if admin or if the user is the owner
+                return !isAdmin && p.user_id !== user?.id;
+              }
+              return true;
+            });
+            localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(filtered));
+            setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...filtered]);
+            setSelectedProp(null);
+          } catch (err) {}
+        }
       }
     }
   };
@@ -602,7 +687,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           const parsed = JSON.parse(saved);
           const updated = parsed.map(p => p.id === propId ? { ...p, approved: true } : p);
           localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(updated));
-          setListings([...DEFAULT_PROPERTIES.map(p => ({ ...p, approved: true })), ...updated]);
+          setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...updated]);
           setSelectedProp(prev => prev ? { ...prev, approved: true } : null);
         } catch (err) {}
       }
