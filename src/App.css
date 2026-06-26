@@ -553,9 +553,23 @@
   gap: 20px;
 }
 
+.contact-grid > :nth-child(1) {
+  order: 2; /* Form comes second on mobile */
+}
+
+.contact-grid > :nth-child(2) {
+  order: 1; /* Contact details (dad's details) comes first on mobile */
+}
+
 @media (min-width: 768px) {
   .contact-grid {
     grid-template-columns: 1.1fr 0.9fr;
+  }
+  .contact-grid > :nth-child(1) {
+    order: 0; /* Reset default order on desktop */
+  }
+  .contact-grid > :nth-child(2) {
+    order: 0; /* Reset default order on desktop */
   }
 }
 
