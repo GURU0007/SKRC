@@ -167,6 +167,18 @@ const FilterIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
 );
 
+const getImagesArray = (imgField) => {
+  if (!imgField) return ['/logo.jpeg'];
+  if (typeof imgField === 'string' && imgField.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(imgField);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch (e) {}
+  }
+  if (Array.isArray(imgField) && imgField.length > 0) return imgField;
+  return [imgField];
+};
+
 function Marketplace({ user, setUser, setActiveTab }) {
   const [activeSubTab, setActiveSubTab] = useState(() => {
     return localStorage.getItem('sri_krishna_marketplace_sub_tab') || 'browse';
@@ -237,8 +249,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
-  const [formImage, setFormImage] = useState('');
-  const [imagePreview, setImagePreview] = useState('');
+  const [formImages, setFormImages] = useState([]); // Array of base64 strings
 
   // Editing State variables
   const [isEditing, setIsEditing] = useState(false);
@@ -249,13 +260,19 @@ function Marketplace({ user, setUser, setActiveTab }) {
   const [editFacing, setEditFacing] = useState('East');
   const [editLocation, setEditLocation] = useState('');
   const [editDescription, setEditDescription] = useState('');
-  const [editImage, setEditImage] = useState('');
+  const [editImages, setEditImages] = useState([]); // Array of base64 strings
   const [editContactName, setEditContactName] = useState('');
   const [editContactPhone, setEditContactPhone] = useState('');
+  
+  // Carousel active image indicator
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
-  const handleEditImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [selectedProp]);
+
+  const compressAndAddImage = (file) => {
+    return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onloadend = () => {
         const img = new Image();
@@ -277,11 +294,25 @@ function Marketplace({ user, setUser, setActiveTab }) {
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           
           const base64Data = canvas.toDataURL('image/jpeg', 0.65);
-          setEditImage(base64Data);
+          resolve(base64Data);
         };
       };
       reader.readAsDataURL(file);
+    });
+  };
+
+  const handleEditImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (editImages.length + files.length > 5) {
+      alert('You can upload a maximum of 5 photos per listing.');
+      return;
     }
+    
+    setFormLoading(true);
+    const promises = files.map(file => compressAndAddImage(file));
+    const base64Results = await Promise.all(promises);
+    setEditImages(prev => [...prev, ...base64Results].slice(0, 5));
+    setFormLoading(false);
   };
 
   const handleStartEdit = () => {
@@ -293,7 +324,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
     setEditFacing(selectedProp.facing);
     setEditLocation(selectedProp.location);
     setEditDescription(selectedProp.description);
-    setEditImage(selectedProp.image);
+    setEditImages(getImagesArray(selectedProp.image));
     setEditContactName(selectedProp.contactName);
     setEditContactPhone(selectedProp.contactPhone);
     setIsEditing(false); // Reset editing form state first
@@ -305,6 +336,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
     if (!editTitle || !editPrice || !editSize || !editLocation || !editContactPhone || !editContactName) return;
 
     const isDefaultProp = typeof selectedProp.id === 'string' && selectedProp.id.startsWith('prop-');
+    const serializedImages = editImages.length > 0 ? JSON.stringify(editImages) : '/logo.jpeg';
 
     if (isSupabaseConfigured && user && !isDefaultProp) {
       try {
@@ -320,7 +352,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
             description: editDescription,
             contact_name: editContactName,
             contact_phone: editContactPhone,
-            image_url: editImage
+            image_url: serializedImages
           })
           .eq('id', selectedProp.id);
 
@@ -337,7 +369,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           description: editDescription,
           contactName: editContactName,
           contactPhone: editContactPhone,
-          image: editImage
+          image: serializedImages
         };
         setSelectedProp(updatedProp);
         setIsEditing(false);
@@ -367,7 +399,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           description: editDescription,
           contactName: editContactName,
           contactPhone: editContactPhone,
-          image: editImage
+          image: serializedImages
         };
 
         // Replace existing edit or add new
@@ -401,7 +433,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                   description: editDescription,
                   contactName: editContactName,
                   contactPhone: editContactPhone,
-                  image: editImage
+                  image: serializedImages
                 };
               }
               return p;
@@ -419,7 +451,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
               description: editDescription,
               contactName: editContactName,
               contactPhone: editContactPhone,
-              image: editImage
+              image: serializedImages
             };
             setSelectedProp(updatedProp);
             setIsEditing(false);
@@ -430,36 +462,18 @@ function Marketplace({ user, setUser, setActiveTab }) {
     }
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new Image();
-        img.src = reader.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const max_width = 800;
-          const scale = max_width / img.width;
-          
-          if (img.width > max_width) {
-            canvas.width = max_width;
-            canvas.height = img.height * scale;
-          } else {
-            canvas.width = img.width;
-            canvas.height = img.height;
-          }
-          
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          
-          const base64Data = canvas.toDataURL('image/jpeg', 0.65);
-          setFormImage(base64Data);
-          setImagePreview(base64Data);
-        };
-      };
-      reader.readAsDataURL(file);
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (formImages.length + files.length > 5) {
+      alert('You can upload a maximum of 5 photos per listing.');
+      return;
     }
+    
+    setFormLoading(true);
+    const promises = files.map(file => compressAndAddImage(file));
+    const base64Results = await Promise.all(promises);
+    setFormImages(prev => [...prev, ...base64Results].slice(0, 5));
+    setFormLoading(false);
   };
 
   // 1. Pre-fill listing contact details when user changes
@@ -579,6 +593,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
     setFormLoading(true);
     const isAdmin = user && user.email === 'reddygarigsr@gmail.com';
+    const serializedImages = formImages.length > 0 ? JSON.stringify(formImages) : '/logo.jpeg';
 
     if (isSupabaseConfigured && user) {
       // Save directly to Supabase cloud Database
@@ -595,7 +610,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
             description: formDescription || 'No description provided.',
             contact_name: formContactName,
             contact_phone: formContactPhone,
-            image_url: formImage || '/logo.jpeg',
+            image_url: serializedImages,
             tag: 'Owner Listed',
             user_id: user.id,
             approved: isAdmin // Automatically approve if listed by Admin
@@ -620,7 +635,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
         description: formDescription || 'No description provided.',
         contactName: formContactName,
         contactPhone: formContactPhone,
-        image: formImage || '/logo.jpeg',
+        image: serializedImages,
         tag: 'Local Listing',
         date: new Date().toISOString().split('T')[0],
         user_id: user ? user.id : 'local-test-user',
@@ -647,8 +662,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
     setFormSize('');
     setFormLocation('');
     setFormDescription('');
-    setFormImage('');
-    setImagePreview('');
+    setFormImages([]);
     setFormLoading(false);
   };
 
@@ -961,7 +975,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                 >
                   <div style={{ height: '180px', position: 'relative', background: '#0f172a' }}>
                     <img 
-                      src={prop.image} 
+                      src={getImagesArray(prop.image)[0]} 
                       alt={prop.title} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} 
                     />
@@ -1126,17 +1140,55 @@ function Marketplace({ user, setUser, setActiveTab }) {
                     </div>
 
                     <div className="form-group">
-                      <label>Update Image (Optional)</label>
+                      <label>Update Images (Optional, Max 5 photos)</label>
                       <input 
                         type="file" 
                         accept="image/*"
                         className="form-input"
                         onChange={handleEditImageUpload}
+                        multiple
                         style={{ background: 'transparent', border: '1px dashed var(--border-color)', padding: '5px' }}
+                        disabled={editImages.length >= 5}
                       />
-                      {editImage && (
-                        <div style={{ marginTop: '10px', height: '80px', width: '120px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                          <img src={editImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      {editImages.length > 0 && (
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+                          {editImages.map((imgUrl, idx) => (
+                            <div 
+                              key={idx} 
+                              style={{ 
+                                position: 'relative', 
+                                height: '60px', 
+                                width: '90px', 
+                                borderRadius: '4px', 
+                                overflow: 'hidden', 
+                                border: '1px solid var(--border-color)' 
+                              }}
+                            >
+                              <img src={imgUrl} alt={`Edit Preview ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <button
+                                type="button"
+                                onClick={() => setEditImages(prev => prev.filter((_, i) => i !== idx))}
+                                style={{ 
+                                  position: 'absolute', 
+                                  top: '2px', 
+                                  right: '2px', 
+                                  width: '16px', 
+                                  height: '16px', 
+                                  borderRadius: '50%', 
+                                  background: 'rgba(239, 68, 68, 0.9)', 
+                                  border: 'none', 
+                                  color: '#fff', 
+                                  fontSize: '0.65rem', 
+                                  cursor: 'pointer', 
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  justify-content: 'center' 
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -1187,18 +1239,66 @@ function Marketplace({ user, setUser, setActiveTab }) {
                   </form>
                 ) : (
                   <>
-                    <div style={{ height: '250px', position: 'relative', background: '#090c12' }}>
-                      <img src={selectedProp.image} alt={selectedProp.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ height: '300px', position: 'relative', background: '#090c12', overflow: 'hidden' }}>
+                      <img 
+                        src={getImagesArray(selectedProp.image)[activeImageIndex] || '/logo.jpeg'} 
+                        alt={selectedProp.title} 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      />
                       <button 
                         onClick={() => { setSelectedProp(null); setIsEditing(false); }}
-                        style={{ position: 'absolute', top: '15px', right: '15px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(11,15,23,0.8)', border: '1px solid var(--border-color)', color: '#fff', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        style={{ position: 'absolute', top: '15px', right: '15px', width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(11,15,23,0.8)', border: '1px solid var(--border-color)', color: '#fff', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', zIndex: 10, justifyContent: 'center' }}
                       >
                         ×
                       </button>
-                      <div style={{ position: 'absolute', bottom: '15px', left: '15px', background: 'var(--accent-gold)', color: '#0b0f17', fontWeight: '800', fontSize: '1.1rem', padding: '6px 14px', borderRadius: '4px' }}>
+
+                      {/* Carousel controls */}
+                      {getImagesArray(selectedProp.image).length > 1 && (
+                        <>
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setActiveImageIndex(prev => (prev - 1 + getImagesArray(selectedProp.image).length) % getImagesArray(selectedProp.image).length); }}
+                            style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(11,15,23,0.7)', border: '1px solid var(--border-color)', color: '#fff', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', zIndex: 10, justifyContent: 'center' }}
+                          >
+                            ‹
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setActiveImageIndex(prev => (prev + 1) % getImagesArray(selectedProp.image).length); }}
+                            style={{ position: 'absolute', right: '15px', top: '50%', transform: 'translateY(-50%)', width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(11,15,23,0.7)', border: '1px solid var(--border-color)', color: '#fff', fontSize: '1.2rem', cursor: 'pointer', display: 'flex', alignItems: 'center', zIndex: 10, justifyContent: 'center' }}
+                          >
+                            ›
+                          </button>
+                        </>
+                      )}
+
+                      <div style={{ position: 'absolute', bottom: '15px', left: '15px', background: 'var(--accent-gold)', color: '#0b0f17', fontWeight: '800', fontSize: '1.1rem', padding: '6px 14px', borderRadius: '4px', zIndex: 5 }}>
                         {formatCurrency(selectedProp.price)}
                       </div>
                     </div>
+
+                    {/* Thumbnails Row */}
+                    {getImagesArray(selectedProp.image).length > 1 && (
+                      <div style={{ display: 'flex', gap: '8px', padding: '12px 24px 0', overflowX: 'auto', background: 'rgba(255,255,255,0.01)', borderBottom: '1px solid var(--border-color)' }}>
+                        {getImagesArray(selectedProp.image).map((imgUrl, idx) => (
+                          <div 
+                            key={idx}
+                            onClick={() => setActiveImageIndex(idx)}
+                            style={{ 
+                              width: '60px', 
+                              height: '45px', 
+                              borderRadius: '4px', 
+                              overflow: 'hidden', 
+                              border: idx === activeImageIndex ? '2px solid var(--accent-gold)' : '1px solid var(--border-color)', 
+                              cursor: 'pointer',
+                              flexShrink: 0
+                            }}
+                          >
+                            <img src={imgUrl} alt="Thumbnail preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
 
                     <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1445,17 +1545,55 @@ function Marketplace({ user, setUser, setActiveTab }) {
                   </div>
 
                   <div className="form-group">
-                    <label>Property Image (Optional)</label>
+                    <label>Property Images (Optional, Max 5 photos)</label>
                     <input 
                       type="file" 
                       accept="image/*"
                       className="form-input"
                       onChange={handleImageUpload}
+                      multiple
                       style={{ background: 'transparent', border: '1px dashed var(--border-color)', padding: '10px' }}
+                      disabled={formImages.length >= 5}
                     />
-                    {imagePreview && (
-                      <div style={{ marginTop: '10px', height: '140px', width: '220px', borderRadius: '4px', overflow: 'hidden', border: '1px solid var(--border-color)' }}>
-                        <img src={imagePreview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {formImages.length > 0 && (
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
+                        {formImages.map((imgUrl, idx) => (
+                          <div 
+                            key={idx} 
+                            style={{ 
+                              position: 'relative', 
+                              height: '80px', 
+                              width: '120px', 
+                              borderRadius: '4px', 
+                              overflow: 'hidden', 
+                              border: '1px solid var(--border-color)' 
+                            }}
+                          >
+                            <img src={imgUrl} alt={`Preview ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <button
+                              type="button"
+                              onClick={() => setFormImages(prev => prev.filter((_, i) => i !== idx))}
+                              style={{ 
+                                position: 'absolute', 
+                                top: '4px', 
+                                right: '4px', 
+                                width: '20px', 
+                                height: '20px', 
+                                borderRadius: '50%', 
+                                background: 'rgba(239, 68, 68, 0.9)', 
+                                border: 'none', 
+                                color: '#fff', 
+                                fontSize: '0.75rem', 
+                                cursor: 'pointer', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center' 
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
