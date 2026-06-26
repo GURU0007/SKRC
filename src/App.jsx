@@ -49,6 +49,7 @@ function App() {
     return null;
   });
   const [recoveryMode, setRecoveryMode] = useState(false);
+  const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
 
   // Sync activeTab changes to URL search parameters & browser history stack
   useEffect(() => {
@@ -191,12 +192,8 @@ function App() {
       <Navbar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
-        user={user} 
-        onLogout={handleLogout} 
-        onChangePassword={() => {
-          setRecoveryMode(true);
-          setActiveTab('login');
-        }}
+        isProfileDrawerOpen={isProfileDrawerOpen}
+        onProfileClick={() => setIsProfileDrawerOpen(true)}
       />
 
       {/* Corporate Hero Banner */}
@@ -287,6 +284,84 @@ function App() {
       <footer style={{ marginTop: 'auto', paddingTop: '30px', paddingBottom: '10px', borderTop: '1px solid var(--border-color)', textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
         Sri Krishna Real Estate & Constructions © 2026. All rights reserved. Kurnool, Andhra Pradesh.
       </footer>
+
+      {/* Profile Side Drawer Dialogue Box */}
+      <div 
+        className={`profile-drawer-overlay ${isProfileDrawerOpen ? 'open' : ''}`}
+        onClick={() => setIsProfileDrawerOpen(false)}
+      >
+        <div 
+          className="profile-drawer"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="profile-drawer-header">
+            <h3 className="profile-drawer-title">Profile Details</h3>
+            <button 
+              className="profile-drawer-close-btn"
+              onClick={() => setIsProfileDrawerOpen(false)}
+              aria-label="Close Profile Drawer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+          </div>
+          
+          <div className="profile-drawer-content">
+            <div className="profile-avatar-large">
+              👤
+            </div>
+            
+            {user ? (
+              <>
+                <h4 className="profile-email">{user.email}</h4>
+                <p className="profile-status">Signed In Session</p>
+                
+                <div className="profile-actions">
+                  <button 
+                    onClick={() => {
+                      setRecoveryMode(true);
+                      setActiveTab('login');
+                      setIsProfileDrawerOpen(false);
+                    }} 
+                    className="profile-action-button secondary"
+                  >
+                    Change Password
+                  </button>
+                  <button 
+                    onClick={() => {
+                      handleLogout();
+                      setIsProfileDrawerOpen(false);
+                    }} 
+                    className="profile-action-button primary"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h4 className="profile-email">Guest User</h4>
+                <p className="profile-status" style={{ color: 'var(--text-secondary)' }}>You are not logged in.</p>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: '1.4', margin: '0 0 24px' }}>
+                  Sign in with your Google or email account to post property listings, view your saved listings, or update your password.
+                </p>
+                
+                <div className="profile-actions">
+                  <button 
+                    onClick={() => {
+                      setRecoveryMode(false);
+                      setActiveTab('login');
+                      setIsProfileDrawerOpen(false);
+                    }} 
+                    className="profile-action-button primary"
+                  >
+                    Sign In / Register
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

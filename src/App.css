@@ -306,23 +306,52 @@
 .hero-stats {
   display: flex;
   gap: 30px;
+  margin-top: 25px;
 }
 
 .stat-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(197, 168, 128, 0.08);
+  border: 1px solid rgba(197, 168, 128, 0.15);
+  color: var(--accent-gold);
+  flex-shrink: 0;
+  transition: transform 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+
+.stat-item:hover .stat-icon-wrapper {
+  transform: scale(1.08);
+  border-color: rgba(197, 168, 128, 0.4);
+  background: rgba(197, 168, 128, 0.12);
+}
+
+.stat-text-wrapper {
   display: flex;
   flex-direction: column;
 }
 
 .stat-val {
   font-family: var(--font-display);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--accent-gold);
+  line-height: 1.2;
 }
 
 .stat-lbl {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text-secondary);
+  line-height: 1.2;
 }
 
 .hero-image-container {
@@ -909,6 +938,165 @@ textarea.form-input {
     width: 32px;
     height: 32px;
   }
+}
+
+/* Side Profile Drawer Overlay */
+.profile-drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 2000;
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.profile-drawer-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.profile-drawer {
+  width: 100%;
+  max-width: 360px;
+  height: 100%;
+  background: #0b0f17;
+  border-left: 1px solid var(--border-color);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  padding: 30px 24px;
+  box-sizing: border-box;
+}
+
+.profile-drawer-overlay.open .profile-drawer {
+  transform: translateX(0);
+}
+
+.profile-drawer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.profile-drawer-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 1px;
+}
+
+.profile-drawer-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.profile-drawer-close-btn:hover {
+  color: var(--accent-gold);
+  transform: rotate(90deg);
+}
+
+.profile-drawer-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.profile-avatar-large {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8a2387, #e94057, #f27121);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 15px rgba(233, 64, 87, 0.3);
+}
+
+.profile-email {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+
+.profile-status {
+  font-size: 0.8rem;
+  color: var(--accent-gold);
+  margin-bottom: 36px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.profile-actions {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.profile-action-button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.profile-action-button.primary {
+  background: var(--accent-gold);
+  border: 1px solid var(--accent-gold);
+  color: #0b0f17;
+}
+
+.profile-action-button.primary:hover {
+  background: #fff;
+  border-color: #fff;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15);
+}
+
+.profile-action-button.secondary {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+}
+
+.profile-action-button.secondary:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+  background: rgba(197, 168, 128, 0.05);
 }
 
 
