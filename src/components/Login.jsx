@@ -213,9 +213,25 @@ function Login({ user, setUser }) {
         }
       });
       if (error) {
-        handleAuthError(error);
-        setAuthLoading(false);
-        return;
+        // Fallback for new users: retry with shouldCreateUser: true if signup is required/blocked
+        if (error.message && (error.message.includes('Signups not allowed') || error.message.includes('signup') || error.message.includes('not allowed'))) {
+          const retry = await supabase.auth.signInWithOtp({
+            email: authEmail,
+            options: {
+              shouldCreateUser: true,
+              emailRedirectTo: window.location.origin
+            }
+          });
+          if (retry.error) {
+            handleAuthError(retry.error);
+            setAuthLoading(false);
+            return;
+          }
+        } else {
+          handleAuthError(error);
+          setAuthLoading(false);
+          return;
+        }
       }
     } else {
       setAuthError('Sandbox Mode: Use code 123456 to verify.');

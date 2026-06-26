@@ -56,3 +56,15 @@ CREATE POLICY "Allow owner or admin update"
 CREATE POLICY "Allow owner or admin delete" 
   ON public.properties FOR DELETE 
   USING (auth.uid() = user_id OR (auth.jwt() ->> 'email') = 'reddygarigsr@gmail.com');
+
+-- 6. RPC Function to check if an email exists in auth.users
+CREATE OR REPLACE FUNCTION public.check_email_exists(user_email TEXT)
+RETURNS BOOLEAN
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM auth.users WHERE email = user_email
+  );
+END;
+$$ LANGUAGE plpgsql;
