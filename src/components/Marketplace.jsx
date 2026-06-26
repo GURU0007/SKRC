@@ -6,6 +6,7 @@ import { supabase, isSupabaseConfigured } from '../supabaseClient';
 const DEFAULT_PROPERTIES = [
   {
     id: 'prop-1',
+    propertyCode: 1001,
     title: 'Premium East-Facing Plot (SriKrishna X1)',
     type: 'plot',
     price: 3600000,
@@ -22,6 +23,7 @@ const DEFAULT_PROPERTIES = [
   },
   {
     id: 'prop-2',
+    propertyCode: 1002,
     title: '3 BHK Contemporary Luxury Villa',
     type: 'villa',
     price: 7800000,
@@ -38,6 +40,7 @@ const DEFAULT_PROPERTIES = [
   },
   {
     id: 'prop-3',
+    propertyCode: 1003,
     title: '2 BHK Premium Apartment in Gated Community',
     type: 'apartment',
     price: 4500000,
@@ -54,6 +57,7 @@ const DEFAULT_PROPERTIES = [
   },
   {
     id: 'prop-4',
+    propertyCode: 1004,
     title: 'Commercial Retail Space on Highway Frontage',
     type: 'commercial',
     price: 12500000,
@@ -70,6 +74,7 @@ const DEFAULT_PROPERTIES = [
   },
   {
     id: 'prop-5',
+    propertyCode: 1005,
     title: 'East-Facing Corner Plot P-02 (SriKrishna X1)',
     type: 'plot',
     price: 3632000,
@@ -86,6 +91,7 @@ const DEFAULT_PROPERTIES = [
   },
   {
     id: 'prop-6',
+    propertyCode: 1006,
     title: '4 BHK Ultra Deluxe Villa with Solar & false ceiling',
     type: 'villa',
     price: 10500000,
@@ -102,6 +108,7 @@ const DEFAULT_PROPERTIES = [
   },
   {
     id: 'prop-7',
+    propertyCode: 1007,
     title: '3 BHK Elegant Flat in Sri Krishna Residency',
     type: 'apartment',
     price: 5800000,
@@ -118,6 +125,7 @@ const DEFAULT_PROPERTIES = [
   },
   {
     id: 'prop-8',
+    propertyCode: 1008,
     title: 'Highway Frontage Agricultural Land (Farm Plots)',
     type: 'plot',
     price: 1800000,
@@ -134,6 +142,7 @@ const DEFAULT_PROPERTIES = [
   },
   {
     id: 'prop-9',
+    propertyCode: 1009,
     title: 'Prime Commercial Office / Bank Space',
     type: 'commercial',
     price: 8800000,
@@ -544,6 +553,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
         // Map Supabase column names if they match camelCase or just merge
         const dbListings = data.map(item => ({
           id: item.id,
+          propertyCode: item.property_code,
           title: item.title,
           type: item.type,
           price: item.price,
@@ -579,7 +589,34 @@ function Marketplace({ user, setUser, setActiveTab }) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        setListings([...processedDefaults.map(p => ({ ...p, approved: true })), ...parsed]);
+        let updated = false;
+        let nextSeq = Number(localStorage.getItem('sri_krishna_property_code_seq'));
+        if (!nextSeq) {
+          let maxCode = 1009;
+          parsed.forEach(p => {
+            const codeNum = Number(p.propertyCode);
+            if (codeNum && codeNum > maxCode) {
+              maxCode = codeNum;
+            }
+          });
+          nextSeq = maxCode + 1;
+        }
+
+        const mappedParsed = parsed.map(p => {
+          if (!p.propertyCode) {
+            p.propertyCode = nextSeq;
+            nextSeq += 1;
+            updated = true;
+          }
+          return p;
+        });
+
+        if (updated) {
+          localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(mappedParsed));
+          localStorage.setItem('sri_krishna_property_code_seq', String(nextSeq));
+        }
+
+        setListings([...processedDefaults.map(p => ({ ...p, approved: true })), ...mappedParsed]);
       } catch (e) {
         setListings(processedDefaults.map(p => ({ ...p, approved: true })));
       }
@@ -651,8 +688,32 @@ function Marketplace({ user, setUser, setActiveTab }) {
       }
     } else {
       // Mock / Offline LocalStorage Save
+      
+      // Determine the next property code sequentially
+      let nextSeq = Number(localStorage.getItem('sri_krishna_property_code_seq'));
+      if (!nextSeq) {
+        let maxCode = 1009; // Default properties end at 1009
+        const savedListings = localStorage.getItem('sri_krishna_marketplace_listings');
+        if (savedListings) {
+          try {
+            const parsed = JSON.parse(savedListings);
+            parsed.forEach(p => {
+              const codeNum = Number(p.propertyCode);
+              if (codeNum && codeNum > maxCode) {
+                maxCode = codeNum;
+              }
+            });
+          } catch (e) {}
+        }
+        nextSeq = maxCode + 1;
+      }
+      
+      const assignedCode = nextSeq;
+      localStorage.setItem('sri_krishna_property_code_seq', String(nextSeq + 1));
+
       const newProperty = {
         id: `custom-${Date.now()}`,
+        propertyCode: assignedCode,
         title: formTitle,
         type: formType,
         price: formPrice,
@@ -1006,8 +1067,15 @@ function Marketplace({ user, setUser, setActiveTab }) {
                       alt={prop.title} 
                       style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} 
                     />
-                    <div style={{ position: 'absolute', top: '10px', left: '10px', background: 'rgba(11,15,23,0.8)', border: '1px solid var(--accent-gold)', borderRadius: '4px', padding: '4px 8px', fontSize: '0.65rem', fontWeight: '700', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <TagIcon /> {prop.tag}
+                    <div style={{ position: 'absolute', top: '10px', left: '10px', display: 'flex', gap: '6px', flexDirection: 'row', flexWrap: 'wrap' }}>
+                      <div style={{ background: 'rgba(11,15,23,0.8)', border: '1px solid var(--accent-gold)', borderRadius: '4px', padding: '4px 8px', fontSize: '0.65rem', fontWeight: '700', color: 'var(--accent-gold)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <TagIcon /> {prop.tag}
+                      </div>
+                      {prop.propertyCode && (
+                        <div style={{ background: 'rgba(11,15,23,0.8)', border: '1px solid var(--accent-gold)', borderRadius: '4px', padding: '4px 8px', fontSize: '0.65rem', fontWeight: '700', color: '#fff', display: 'flex', alignItems: 'center' }}>
+                          ID: {prop.propertyCode}
+                        </div>
+                      )}
                     </div>
                     {prop.approved === false && (
                       <div style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(239, 68, 68, 0.95)', border: '1px solid var(--accent-red)', borderRadius: '4px', padding: '4px 8px', fontSize: '0.65rem', fontWeight: '700', color: '#fff' }}>
@@ -1210,7 +1278,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                                   cursor: 'pointer', 
                                   display: 'flex', 
                                   alignItems: 'center', 
-                                  justify-content: 'center' 
+                                  justifyContent: 'center' 
                                 }}
                               >
                                 ×
@@ -1334,6 +1402,11 @@ function Marketplace({ user, setUser, setActiveTab }) {
                           <span style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: 'var(--accent-gold)', fontWeight: '700', letterSpacing: '1.5px' }}>
                             {selectedProp.type} Property • {selectedProp.facing} Facing
                           </span>
+                          {selectedProp.propertyCode && (
+                            <span style={{ display: 'inline-block', marginLeft: '10px', background: 'rgba(197,168,128,0.15)', border: '1px solid var(--accent-gold)', color: 'var(--accent-gold)', borderRadius: '4px', padding: '2px 6px', fontSize: '0.65rem', fontWeight: '700' }}>
+                              ID: {selectedProp.propertyCode}
+                            </span>
+                          )}
                           {selectedProp.approved === false && (
                             <span style={{ display: 'inline-block', marginLeft: '10px', background: 'rgba(239,68,68,0.15)', border: '1px solid var(--accent-red)', color: 'var(--accent-red)', borderRadius: '4px', padding: '2px 6px', fontSize: '0.65rem', fontWeight: '700' }}>
                               Pending Approval

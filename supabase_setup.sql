@@ -123,3 +123,10 @@ BEGIN
     updated_at = NOW();
 END;
 $$ LANGUAGE plpgsql;
+
+-- 10. Add sequential property_code starting from 1001
+CREATE SEQUENCE IF NOT EXISTS public.property_id_seq START WITH 1001;
+ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS property_code INT DEFAULT nextval('public.property_id_seq') UNIQUE;
+-- Backfill existing NULL records
+UPDATE public.properties SET property_code = nextval('public.property_id_seq') WHERE property_code IS NULL;
+
