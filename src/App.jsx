@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { supabase } from './supabaseClient';
+import { supabase, tabId } from './supabaseClient';
 
 // Import local components
 import Navbar from './components/Navbar';
@@ -9,6 +9,7 @@ import Projects from './components/Projects';
 import Estimator from './components/Estimator';
 import Marketplace from './components/Marketplace';
 import Contact from './components/Contact';
+import Login from './components/Login';
 
 // Icons used for home dashboard preview panels
 const CompassIcon = () => (
@@ -27,23 +28,77 @@ function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [prefilledPlot, setPrefilledPlot] = useState('');
   const [user, setUser] = useState(null);
+  const [recoveryMode, setRecoveryMode] = useState(false);
 
   useEffect(() => {
+    const handleAuthCallback = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      const isCallback = code || window.location.hash.includes('access_token');
+      
+      if (code) {
+        try {
+          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+          if (!error && data?.session) {
+            setUser(data.session.user);
+          }
+        } catch (err) {
+          console.error("Error exchanging code for session:", err);
+        }
+      }
+
+      if (isCallback) {
+        // Since the user returned via an auth link/OAuth redirect, land them directly in the marketplace
+        setActiveTab('marketplace');
+        
+        // Clean up URL parameters to keep the address bar clean, but preserve the tid parameter
+        const params = new URLSearchParams(window.location.search);
+        params.delete('code');
+        params.delete('access_token');
+        const newSearch = params.toString();
+        const newUrl = window.location.origin + window.location.pathname + (newSearch ? '?' + newSearch : '');
+        window.history.replaceState({}, document.title, newUrl);
+      }
+    };
+
+    handleAuthCallback();
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      if (event === 'PASSWORD_RECOVERY') {
+        setRecoveryMode(true);
+        setActiveTab('login');
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      // Use local scope so that other active tab sessions are not invalidated on the server
+      await supabase.auth.signOut({ scope: 'local' });
+    } catch (err) {
+      console.warn("Supabase signOut error:", err);
+    }
+    // Delete only the current tab's storage key in localStorage
+    if (typeof window !== 'undefined' && tabId) {
+      window.localStorage.removeItem(`sb-auth-token-${tabId}`);
+    }
     setUser(null);
   };
+
+  // Redirect to marketplace automatically once user logs in from the login tab
+  useEffect(() => {
+    if (user && activeTab === 'login' && !recoveryMode) {
+      setActiveTab('marketplace');
+    }
+  }, [user, activeTab, recoveryMode]);
+
 
   // Handle routing plot selection inquiry directly to the contact tab
   const handleSelectPlotInquiry = (plotNumber) => {
@@ -54,10 +109,19 @@ function App() {
   return (
     <div className="app-container">
       {/* Brand Navbar */}
-      <Navbar activeTab={activeTab} setActiveTab={setActiveTab} user={user} onLogout={handleLogout} />
+      <Navbar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        user={user} 
+        onLogout={handleLogout} 
+        onChangePassword={() => {
+          setRecoveryMode(true);
+          setActiveTab('login');
+        }}
+      />
 
       {/* Corporate Hero Banner */}
-      <Hero />
+      {activeTab !== 'login' && <Hero />}
 
       {/* Main Panel View Area */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
@@ -125,7 +189,12 @@ function App() {
 
         {/* Tab 4: Property Marketplace */}
         {activeTab === 'marketplace' && (
-          <Marketplace user={user} setUser={setUser} />
+          <Marketplace user={user} setUser={setUser} setActiveTab={setActiveTab} />
+        )}
+
+        {/* Dedicated Login Tab */}
+        {activeTab === 'login' && (!user || recoveryMode) && (
+          <Login user={user} setUser={setUser} recoveryMode={recoveryMode} setRecoveryMode={setRecoveryMode} />
         )}
 
         {/* Tab 5: Contact Booking Request */}

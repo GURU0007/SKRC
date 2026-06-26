@@ -1,42 +1,44 @@
 import React from 'react';
 
-function Navbar({ activeTab, setActiveTab, user, onLogout }) {
+function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword }) {
   return (
     <header className="app-header-nav">
       {/* Banner */}
-      <div className="brand-banner">
-        {/* Top Right Auth Section */}
-        <div className="top-auth-header">
-          {user ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ color: 'var(--accent-gold)', fontWeight: '600', fontSize: '0.8rem' }}>
-                👤 {user.email}
-              </span>
-              <button 
-                onClick={onLogout} 
-                className="filter-btn" 
-                style={{ fontSize: '0.75rem', padding: '4px 10px', borderColor: 'var(--accent-red)', color: 'var(--accent-red)', cursor: 'pointer' }}
-              >
-                Sign Out
-              </button>
-            </div>
-          ) : (
-            <button 
-              onClick={() => setActiveTab('marketplace')} 
-              className="gold-button" 
-              style={{ padding: '6px 14px', fontSize: '0.75rem', cursor: 'pointer' }}
-            >
-              Sign In
-            </button>
-          )}
-        </div>
+      {activeTab !== 'login' && (
+        <div className="brand-banner">
+          <h1 className="banner-title">
+            Sri Krishna <span className="banner-subtitle">Real Estate & Constructions</span>
+          </h1>
+          <div className="banner-tagline">From Land to Landmark</div>
+          <div className="banner-phone">Cell: +91 8985961113</div>
 
-        <h1 className="banner-title">
-          Sri Krishna <span className="banner-subtitle">Real Estate & Constructions</span>
-        </h1>
-        <div className="banner-tagline">From Land to Landmark</div>
-        <div className="banner-phone">Cell: +91 8985961113</div>
-      </div>
+          {/* Bottom Auth Section (Right above Navbar) */}
+          <div className="banner-auth-header">
+            {user ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ color: 'var(--accent-gold)', fontWeight: '600', fontSize: '0.85rem' }}>
+                  👤 {user.email}
+                </span>
+                <button 
+                  onClick={onLogout} 
+                  className="filter-btn" 
+                  style={{ borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)', cursor: 'pointer' }}
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setActiveTab('login')} 
+                className="gold-button" 
+                style={{ cursor: 'pointer' }}
+              >
+                Login
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="nav-links">
@@ -45,6 +47,12 @@ function Navbar({ activeTab, setActiveTab, user, onLogout }) {
           onClick={() => setActiveTab('home')}
         >
           Home
+        </button>
+        <button 
+          className={`nav-tab-btn ${activeTab === 'marketplace' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('marketplace')}
+        >
+          Marketplace
         </button>
         <button 
           className={`nav-tab-btn ${activeTab === 'projects' ? 'active' : ''}`} 
@@ -57,12 +65,6 @@ function Navbar({ activeTab, setActiveTab, user, onLogout }) {
           onClick={() => setActiveTab('estimator')}
         >
           Cost Estimator
-        </button>
-        <button 
-          className={`nav-tab-btn ${activeTab === 'marketplace' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('marketplace')}
-        >
-          Marketplace
         </button>
         <button 
           className={`nav-tab-btn ${activeTab === 'contact' ? 'active' : ''}`} 

@@ -1,7 +1,7 @@
--- Sri Krishna Real Estate: Supabase Database Setup Script
--- Paste this script into the Supabase SQL Editor to set up your tables and security policies.
+-- Sri Krishna Real Estate: Supabase Setup
+-- Paste into Supabase SQL Editor
 
--- 1. Create the properties table
+-- 1. Create table
 CREATE TABLE IF NOT EXISTS public.properties (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   title TEXT NOT NULL,
@@ -19,28 +19,40 @@ CREATE TABLE IF NOT EXISTS public.properties (
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL
 );
 
--- 2. Enable Row Level Security (RLS) on the table
+-- 2. Add approved column and backfill
+ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS approved BOOLEAN DEFAULT FALSE;
+UPDATE public.properties SET approved = true WHERE approved IS NULL;
+
+-- 3. Enable RLS
 ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 
--- 3. Create Security Policies
+-- 4. Clean old policies
+DROP POLICY IF EXISTS "Allow public read access" ON public.properties;
+DROP POLICY IF EXISTS "Allow authenticated insert" ON public.properties;
+DROP POLICY IF EXISTS "Allow owner update" ON public.properties;
+DROP POLICY IF EXISTS "Allow owner delete" ON public.properties;
+DROP POLICY IF EXISTS "Allow owner or admin update" ON public.properties;
+DROP POLICY IF EXISTS "Allow owner or admin delete" ON public.properties;
 
--- Policy A: Allow anyone (public) to view/select properties
+-- 5. Create Policies
+
+-- Policy A: Read access (approved listings public, unapproved for owner or admin)
 CREATE POLICY "Allow public read access" 
   ON public.properties FOR SELECT 
-  USING (true);
+  USING (approved = true OR auth.uid() = user_id OR (auth.jwt() ->> 'email') = 'reddygarigsr@gmail.com');
 
--- Policy B: Allow logged-in users to create properties
+-- Policy B: Insert access (authenticated only)
 CREATE POLICY "Allow authenticated insert" 
   ON public.properties FOR INSERT 
   WITH CHECK (auth.role() = 'authenticated');
 
--- Policy C: Allow users to edit only their own listed properties
-CREATE POLICY "Allow owner update" 
+-- Policy C: Update access (owner or admin)
+CREATE POLICY "Allow owner or admin update" 
   ON public.properties FOR UPDATE 
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() = user_id OR (auth.jwt() ->> 'email') = 'reddygarigsr@gmail.com')
+  WITH CHECK (auth.uid() = user_id OR (auth.jwt() ->> 'email') = 'reddygarigsr@gmail.com');
 
--- Policy D: Allow users to delete only their own listed properties
-CREATE POLICY "Allow owner delete" 
+-- Policy D: Delete access (owner or admin)
+CREATE POLICY "Allow owner or admin delete" 
   ON public.properties FOR DELETE 
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id OR (auth.jwt() ->> 'email') = 'reddygarigsr@gmail.com');
