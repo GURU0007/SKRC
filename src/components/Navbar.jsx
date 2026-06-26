@@ -61,16 +61,16 @@ function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword }) {
           Plots Layout
         </button>
         <button 
-          className={`nav-tab-btn ${activeTab === 'estimator' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('estimator')}
-        >
-          Cost Estimator
-        </button>
-        <button 
           className={`nav-tab-btn ${activeTab === 'contact' ? 'active' : ''}`} 
           onClick={() => setActiveTab('contact')}
         >
           Contact Us
+        </button>
+        <button 
+          className={`nav-tab-btn ${activeTab === 'estimator' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('estimator')}
+        >
+          Cost Estimator
         </button>
       </nav>
     </header>
