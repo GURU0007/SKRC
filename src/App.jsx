@@ -114,16 +114,17 @@ function App() {
         localStorage.setItem('sri_krishna_marketplace_sub_tab', 'browse');
         localStorage.setItem('sri_krishna_marketplace_my_listings', 'false');
         localStorage.setItem('sri_krishna_marketplace_pending_only', 'false');
-        setActiveTab('marketplace');
         
-        // Clean up URL parameters to keep the address bar clean, preserving the tab state and tid
+        // Replace the OAuth callback history entry with clean Home state first,
+        // then sync triggers marketplace to be pushed onto history. (Swiping back goes to Home)
         const params = new URLSearchParams(window.location.search);
         params.delete('code');
         params.delete('access_token');
-        params.set('tab', 'marketplace');
         const newSearch = params.toString();
         const newUrl = window.location.origin + window.location.pathname + (newSearch ? '?' + newSearch : '');
-        window.history.replaceState({ tab: 'marketplace' }, document.title, newUrl);
+        window.history.replaceState({ tab: 'home' }, document.title, newUrl);
+
+        setActiveTab('marketplace');
       }
     };
 
@@ -166,6 +167,13 @@ function App() {
       localStorage.setItem('sri_krishna_marketplace_sub_tab', 'browse');
       localStorage.setItem('sri_krishna_marketplace_my_listings', 'false');
       localStorage.setItem('sri_krishna_marketplace_pending_only', 'false');
+      
+      // Replace the login history entry with clean Home state first,
+      // so swiping back from marketplace will go to Home instead of back to login tab
+      const url = new URL(window.location.href);
+      url.searchParams.delete('tab');
+      window.history.replaceState({ tab: 'home' }, '', url.pathname + url.search);
+
       setActiveTab('marketplace');
     }
   }, [user, activeTab, recoveryMode]);
