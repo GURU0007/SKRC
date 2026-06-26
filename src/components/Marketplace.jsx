@@ -271,6 +271,19 @@ function Marketplace({ user, setUser, setActiveTab }) {
     setActiveImageIndex(0);
   }, [selectedProp]);
 
+  // Autoplay carousel rotation when viewing property details
+  useEffect(() => {
+    if (!selectedProp || isEditing) return;
+    const images = getImagesArray(selectedProp.image);
+    if (images.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setActiveImageIndex(prev => (prev + 1) % images.length);
+    }, 3000); // Auto rotate every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [selectedProp, activeImageIndex, isEditing]);
+
   const compressAndAddImage = (file) => {
     return new Promise((resolve) => {
       const reader = new FileReader();
@@ -333,7 +346,14 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    if (!editTitle || !editPrice || !editSize || !editLocation || !editContactPhone || !editContactName) return;
+    if (!editTitle || !editPrice || !editSize || !editLocation || !editDescription || !editContactPhone || !editContactName) {
+      alert('All fields are mandatory, including Description.');
+      return;
+    }
+    if (editImages.length === 0) {
+      alert('Please upload at least one property image.');
+      return;
+    }
 
     const isDefaultProp = typeof selectedProp.id === 'string' && selectedProp.id.startsWith('prop-');
     const serializedImages = editImages.length > 0 ? JSON.stringify(editImages) : '/logo.jpeg';
@@ -589,7 +609,14 @@ function Marketplace({ user, setUser, setActiveTab }) {
   const handleAddProperty = async (e) => {
     e.preventDefault();
     setFormError('');
-    if (!formTitle || !formPrice || !formSize || !formLocation || !formContactPhone || !formContactName) return;
+    if (!formTitle || !formPrice || !formSize || !formLocation || !formDescription || !formContactPhone || !formContactName) {
+      setFormError('All fields are mandatory, including Description.');
+      return;
+    }
+    if (formImages.length === 0) {
+      setFormError('Please upload at least one property image.');
+      return;
+    }
 
     setFormLoading(true);
     const isAdmin = user && user.email === 'reddygarigsr@gmail.com';
@@ -1136,11 +1163,12 @@ function Marketplace({ user, setUser, setActiveTab }) {
                         rows="3" 
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
+                        required
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Update Images (Optional, Max 5 photos)</label>
+                      <label>Update Images (Required, Max 5 photos)</label>
                       <input 
                         type="file" 
                         accept="image/*"
@@ -1541,11 +1569,12 @@ function Marketplace({ user, setUser, setActiveTab }) {
                       placeholder="Describe amenities, surroundings, road width, approvals, construction state..."
                       value={formDescription}
                       onChange={(e) => setFormDescription(e.target.value)}
+                      required
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>Property Images (Optional, Max 5 photos)</label>
+                    <label>Property Images (Required, Max 5 photos)</label>
                     <input 
                       type="file" 
                       accept="image/*"
