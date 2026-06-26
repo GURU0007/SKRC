@@ -829,5 +829,39 @@ textarea.form-input {
   }
 }
 
+/* Header Back Button Arrow */
+.nav-back-arrow-btn {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-gold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 999;
+  position: absolute;
+  left: 20px;
+  top: 20px;
+}
+
+.nav-back-arrow-btn:hover {
+  border-color: var(--accent-gold);
+  background: rgba(197, 168, 128, 0.1);
+  box-shadow: 0 0 10px rgba(197, 168, 128, 0.2);
+}
+
+@media (max-width: 600px) {
+  .nav-back-arrow-btn {
+    left: 10px;
+    top: 10px;
+    width: 32px;
+    height: 32px;
+  }
+}
+
 
 
