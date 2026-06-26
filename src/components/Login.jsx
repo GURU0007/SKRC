@@ -55,26 +55,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
       setAuthStep('password');
       setAuthLoading(false);
     } else {
-      // New User -> Send OTP code and proceed to OTP verification
-      if (isSupabaseConfigured) {
-        const { error } = await supabase.auth.signInWithOtp({
-          email: authEmail,
-          options: {
-            shouldCreateUser: true,
-            emailRedirectTo: window.location.origin
-          }
-        });
-
-        if (error) {
-          handleAuthError(error);
-          setAuthLoading(false);
-          return;
-        }
-      } else {
-        // Sandbox mock OTP send
-        setAuthError('Sandbox Mode: Use code 123456 to verify.');
-      }
-      setAuthStep('otp');
+      // New User -> Proceed to password registration prompt (allows choosing password or OTP registration)
+      setAuthStep('register-password');
       setAuthLoading(false);
     }
   };
@@ -299,10 +281,52 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     }
   };
 
+  const handleRegisterWithPassword = async (e) => {
+    e.preventDefault();
+    if (!authPassword) return;
+    setAuthError('');
+    setAuthLoading(true);
+    try {
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail,
+          password: authPassword
+        });
+        if (error) throw error;
+        if (data?.session) {
+          setUser(data.session.user);
+          setAuthEmail('');
+          setAuthPassword('');
+          setAuthStep('email');
+        } else {
+          setAuthError('Registration successful! Please check your email to confirm your account before signing in.');
+        }
+      } else {
+        // Sandbox mock registration
+        setUser({
+          id: 'mock-sandbox-user-id',
+          email: authEmail,
+          user_metadata: {
+            name: authEmail.split('@')[0],
+            phone: '+91 8985961113'
+          }
+        });
+        setAuthEmail('');
+        setAuthPassword('');
+        setAuthStep('email');
+      }
+    } catch (err) {
+      setAuthError(err.message || String(err));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
   const getPanelTitle = () => {
     if (recoveryMode) return 'Set New Password';
     if (authStep === 'email') return 'Sign In / Register';
     if (authStep === 'password') return 'Enter Password';
+    if (authStep === 'register-password') return 'Create Account Password';
     if (authStep === 'otp') return 'Enter Verification Code';
     return 'Sign In';
   };
@@ -405,7 +429,9 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                   ? handleCheckEmail 
                   : authStep === 'password' 
                     ? handleVerifyPassword 
-                    : handleVerifyOtp
+                    : authStep === 'register-password'
+                      ? handleRegisterWithPassword
+                      : handleVerifyOtp
               } 
               style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
             >
@@ -439,7 +465,22 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                 </div>
               )}
 
-              {/* Verification Code field (Step 2 - New Users or OTP selected) */}
+              {/* Password field (Step 2 - New Users) */}
+              {authStep === 'register-password' && (
+                <div className="form-group">
+                  <label>Create Password</label>
+                  <input 
+                    type="password" 
+                    className="form-input" 
+                    placeholder="Choose a password for registration" 
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Verification Code field (Step 2 - New/Existing Users with OTP selected) */}
               {authStep === 'otp' && (
                 <div className="form-group">
                   <label>6-Digit Verification Code</label>
@@ -479,7 +520,9 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                     ? 'Continue' 
                     : authStep === 'password' 
                       ? 'Sign In' 
-                      : 'Verify & Sign In'}
+                      : authStep === 'register-password'
+                        ? 'Register & Create Account'
+                        : 'Verify & Sign In'}
               </button>
 
               {/* Bottom navigation links to switch steps */}
@@ -499,8 +542,22 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                   </div>
                 )}
 
+                {authStep === 'register-password' && (
+                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+                      Or Register using{' '}
+                      <span 
+                        onClick={handleSendOtpForExisting} 
+                        style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        Verification Code (OTP)
+                      </span>
+                    </p>
+                  </div>
+                )}
+
                 {authStep !== 'email' && (
-                  <p style={{ color: 'var(--text-secondary)', marginTop: authStep === 'password' ? '10px' : '0px' }}>
+                  <p style={{ color: 'var(--text-secondary)', marginTop: (authStep === 'password' || authStep === 'register-password') ? '10px' : '0px' }}>
                     Want to change email?{' '}
                     <span 
                       onClick={() => { 
