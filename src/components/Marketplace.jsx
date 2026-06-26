@@ -1206,20 +1206,14 @@ function Marketplace({ user, setUser, setActiveTab }) {
                           <div>
                             <p style={{ fontWeight: '700', fontSize: '0.9rem' }}>{selectedProp.contactName}</p>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                              Phone: {
-                                (user && (user.email === 'reddygarigsr@gmail.com' || selectedProp.user_id === user.id))
-                                  ? `${selectedProp.contactPhone} (Private Owner Number)`
-                                  : '+91 8985961113'
-                              }
+                              Phone: +91 8985961113
                             </p>
                           </div>
                           <div style={{ display: 'flex', gap: '10px' }}>
                             <a 
                               href={getWhatsAppLink({
                                 ...selectedProp,
-                                contactPhone: (user && (user.email === 'reddygarigsr@gmail.com' || selectedProp.user_id === user.id))
-                                  ? selectedProp.contactPhone
-                                  : '8985961113'
+                                contactPhone: '8985961113'
                               })} 
                               target="_blank" 
                               rel="noopener noreferrer"
@@ -1229,11 +1223,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                               💬 WhatsApp
                             </a>
                             <a 
-                              href={`tel:${
-                                (user && (user.email === 'reddygarigsr@gmail.com' || selectedProp.user_id === user.id))
-                                  ? selectedProp.contactPhone
-                                  : '8985961113'
-                              }`} 
+                              href="tel:8985961113" 
                               className="gold-button" 
                               style={{ textDecoration: 'none', padding: '8px 16px', fontSize: '0.8rem' }}
                             >
