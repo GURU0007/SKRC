@@ -32,7 +32,33 @@ function App() {
     return 'home';
   });
   const [prefilledPlot, setPrefilledPlot] = useState('');
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    if (typeof window !== 'undefined') {
+      // Try tab-specific token first
+      if (tabId) {
+        const stored = localStorage.getItem(`sb-auth-token-${tabId}`);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed && parsed.user) return parsed.user;
+          } catch (e) {}
+        }
+      }
+      
+      // Fallback: search for general Supabase keys
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
+          const item = localStorage.getItem(key);
+          try {
+            const parsed = JSON.parse(item);
+            if (parsed && parsed.user) return parsed.user;
+          } catch (e) {}
+        }
+      }
+    }
+    return null;
+  });
   const [recoveryMode, setRecoveryMode] = useState(false);
 
   useEffect(() => {
