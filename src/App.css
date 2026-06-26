@@ -733,3 +733,54 @@ textarea.form-input {
   }
 }
 
+/* Compact Brand Header */
+.compact-brand-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 24px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  box-sizing: border-box;
+}
+
+.compact-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.compact-main-title {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 1px;
+}
+
+.compact-subtitle {
+  font-family: 'Cinzel Decorative', serif;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+}
+
+.compact-auth-header {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .compact-brand-header {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+  .compact-title-group {
+    justify-content: center;
+    width: 100%;
+  }
+}
+
