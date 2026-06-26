@@ -130,7 +130,7 @@ function App() {
       />
 
       {/* Corporate Hero Banner */}
-      {activeTab !== 'login' && <Hero />}
+      {activeTab === 'home' && <Hero />}
 
       {/* Main Panel View Area */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
