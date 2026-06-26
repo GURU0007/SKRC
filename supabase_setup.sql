@@ -68,3 +68,58 @@ BEGIN
   );
 END;
 $$ LANGUAGE plpgsql;
+
+-- 7. User Auth Preferences table (stores preferred login method per email)
+CREATE TABLE IF NOT EXISTS public.user_auth_preferences (
+  email TEXT PRIMARY KEY,
+  preferred_method TEXT NOT NULL DEFAULT 'password', -- 'otp' or 'password'
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT TIMEZONE('utc'::text, NOW()) NOT NULL
+);
+
+-- Enable RLS
+ALTER TABLE public.user_auth_preferences ENABLE ROW LEVEL SECURITY;
+
+-- Clean old policies
+DROP POLICY IF EXISTS "Allow public read auth prefs" ON public.user_auth_preferences;
+DROP POLICY IF EXISTS "Allow authenticated upsert auth prefs" ON public.user_auth_preferences;
+
+-- Policy: Anyone can read preferences (needed before login to determine method)
+CREATE POLICY "Allow public read auth prefs"
+  ON public.user_auth_preferences FOR SELECT
+  USING (true);
+
+-- Policy: Authenticated users can insert/update their own preference
+CREATE POLICY "Allow authenticated upsert auth prefs"
+  ON public.user_auth_preferences FOR ALL
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
+
+-- 8. RPC: Get auth preference for an email (callable without auth)
+CREATE OR REPLACE FUNCTION public.get_auth_preference(user_email TEXT)
+RETURNS TEXT
+SECURITY DEFINER
+AS $$
+DECLARE
+  pref TEXT;
+BEGIN
+  SELECT preferred_method INTO pref
+  FROM public.user_auth_preferences
+  WHERE email = LOWER(user_email);
+  
+  RETURN pref; -- Returns NULL if no preference set
+END;
+$$ LANGUAGE plpgsql;
+
+-- 9. RPC: Set auth preference for an email (callable by authenticated users)
+CREATE OR REPLACE FUNCTION public.set_auth_preference(user_email TEXT, method TEXT)
+RETURNS VOID
+SECURITY DEFINER
+AS $$
+BEGIN
+  INSERT INTO public.user_auth_preferences (email, preferred_method, updated_at)
+  VALUES (LOWER(user_email), method, NOW())
+  ON CONFLICT (email) DO UPDATE SET
+    preferred_method = EXCLUDED.preferred_method,
+    updated_at = NOW();
+END;
+$$ LANGUAGE plpgsql;

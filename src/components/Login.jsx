@@ -1,6 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
+// Helper: get auth preference from localStorage cache
+const getCachedAuthPref = (email) => {
+  try {
+    const prefs = JSON.parse(localStorage.getItem('auth_method_prefs') || '{}');
+    return prefs[email.toLowerCase()] || null;
+  } catch { return null; }
+};
+
+// Helper: set auth preference in localStorage cache
+const setCachedAuthPref = (email, method) => {
+  try {
+    const prefs = JSON.parse(localStorage.getItem('auth_method_prefs') || '{}');
+    prefs[email.toLowerCase()] = method;
+    localStorage.setItem('auth_method_prefs', JSON.stringify(prefs));
+  } catch {}
+};
+
+// Fetch auth preference from database (source of truth)
+const getDbAuthPref = async (email) => {
+  if (!isSupabaseConfigured) return null;
+  try {
+    const { data, error } = await supabase.rpc('get_auth_preference', {
+      useremail: email
+    });
+    if (error || !data) return null;
+    // Cache it locally for next time
+    setCachedAuthPref(email, data);
+    return data; // 'otp' | 'password'
+  } catch { return null; }
+};
+
+// Save auth preference to both DB and localStorage
+const saveAuthPreference = async (email, method) => {
+  // Always update local cache immediately
+  setCachedAuthPref(email, method);
+  // Write to database (fire-and-forget, non-blocking)
+  if (isSupabaseConfigured) {
+    try {
+      await supabase.rpc('set_auth_preference', {
+        useremail: email,
+        method: method
+      });
+    } catch (err) {
+      console.warn('Failed to save auth preference to DB:', err);
+    }
+  }
+};
+
 function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
   const [authStep, setAuthStep] = useState('email'); // 'email', 'password', 'otp'
   const [authEmail, setAuthEmail] = useState('');
@@ -19,7 +67,42 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     setAuthError(msg);
   };
 
-  // Step 1: Check if Email exists
+  // Helper to send OTP for a given email (used by auto-route and manual switch)
+  const sendOtpForEmail = async (email, createUser = false) => {
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: createUser,
+          emailRedirectTo: window.location.origin
+        }
+      });
+      if (error) {
+        // Retry with shouldCreateUser: true if signup is needed
+        if (error.message && (error.message.includes('Signups not allowed') || error.message.includes('signup') || error.message.includes('not allowed'))) {
+          const retry = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+              shouldCreateUser: true,
+              emailRedirectTo: window.location.origin
+            }
+          });
+          if (retry.error) {
+            handleAuthError(retry.error);
+            return false;
+          }
+        } else {
+          handleAuthError(error);
+          return false;
+        }
+      }
+    } else {
+      setAuthError('Sandbox Mode: Use code 123456 to verify.');
+    }
+    return true;
+  };
+
+  // Step 1: Check if Email exists and route based on saved preference
   const handleCheckEmail = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -34,7 +117,6 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         });
         
         if (error) {
-          // Fallback if RPC doesn't exist: assume existing user so they can try password first
           console.warn("RPC check_email_exists not found. Defaulting to existing user flow.");
           exists = true;
         } else {
@@ -44,18 +126,34 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         exists = true;
       }
     } else {
-      // Sandbox fallback: assume testowner@gmail.com is existing, others are new
       exists = authEmail === 'testowner@gmail.com';
     }
 
     setIsExistingUser(exists);
 
-    if (exists) {
-      // Existing User -> Proceed to password prompt
+    // Check auth preference: localStorage first (fast), then DB (source of truth)
+    let savedPref = getCachedAuthPref(authEmail);
+    if (!savedPref) {
+      savedPref = await getDbAuthPref(authEmail);
+    }
+
+    if (savedPref === 'otp') {
+      // User previously chose OTP — auto-send OTP and go straight to OTP step
+      const success = await sendOtpForEmail(authEmail, !exists);
+      if (success) {
+        setAuthStep('otp');
+      }
+      setAuthLoading(false);
+    } else if (savedPref === 'password' && exists) {
+      // User previously chose password and account exists — go straight to password
+      setAuthStep('password');
+      setAuthLoading(false);
+    } else if (exists) {
+      // Existing user, no preference saved — show password (default for existing users)
       setAuthStep('password');
       setAuthLoading(false);
     } else {
-      // New User -> Proceed to password registration prompt (allows choosing password or OTP registration)
+      // New user, no preference — show registration password screen
       setAuthStep('register-password');
       setAuthLoading(false);
     }
@@ -82,6 +180,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
             handleAuthError(error);
           }
         } else {
+          // Save preference: this user prefers password login
+          saveAuthPreference(authEmail, 'password');
           setUser(data?.user || data?.session?.user || null);
           setAuthEmail('');
           setAuthPassword('');
@@ -91,6 +191,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         // Sandbox mock password verify
         setTimeout(() => {
           if (authPassword === 'password') {
+            saveAuthPreference(authEmail, 'password');
             setUser({
               id: 'mock-sandbox-user-id',
               email: authEmail,
@@ -152,6 +253,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         finalData = retry.data;
       }
 
+      // Save preference: this user prefers OTP login
+      saveAuthPreference(authEmail, 'otp');
       setUser(finalData?.user || finalData?.session?.user || null);
       setAuthEmail('');
       setOtpCode('');
@@ -160,6 +263,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
       // Sandbox mock OTP verify
       setTimeout(() => {
         if (otpCode === '123456') {
+          saveAuthPreference(authEmail, 'otp');
           setUser({
             id: 'mock-sandbox-user-id',
             email: authEmail,
@@ -181,44 +285,14 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     setAuthLoading(false);
   };
 
-  // Trigger OTP for Existing User (when they click "Try another way")
+  // Trigger OTP for Existing User (when they click "Switch to OTP")
   const handleSendOtpForExisting = async () => {
     setAuthError('');
     setAuthLoading(true);
-
-    if (isSupabaseConfigured) {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: authEmail,
-        options: {
-          shouldCreateUser: false,
-          emailRedirectTo: window.location.origin
-        }
-      });
-      if (error) {
-        // Fallback for new users: retry with shouldCreateUser: true if signup is required/blocked
-        if (error.message && (error.message.includes('Signups not allowed') || error.message.includes('signup') || error.message.includes('not allowed'))) {
-          const retry = await supabase.auth.signInWithOtp({
-            email: authEmail,
-            options: {
-              shouldCreateUser: true,
-              emailRedirectTo: window.location.origin
-            }
-          });
-          if (retry.error) {
-            handleAuthError(retry.error);
-            setAuthLoading(false);
-            return;
-          }
-        } else {
-          handleAuthError(error);
-          setAuthLoading(false);
-          return;
-        }
-      }
-    } else {
-      setAuthError('Sandbox Mode: Use code 123456 to verify.');
+    const success = await sendOtpForEmail(authEmail, !isExistingUser);
+    if (success) {
+      setAuthStep('otp');
     }
-    setAuthStep('otp');
     setAuthLoading(false);
   };
 
@@ -294,6 +368,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         });
         if (error) throw error;
         if (data?.session) {
+          saveAuthPreference(authEmail, 'password');
           setUser(data.session.user);
           setAuthEmail('');
           setAuthPassword('');
@@ -303,6 +378,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         }
       } else {
         // Sandbox mock registration
+        saveAuthPreference(authEmail, 'password');
         setUser({
           id: 'mock-sandbox-user-id',
           email: authEmail,
@@ -528,7 +604,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
               {/* Bottom navigation links to switch steps */}
               <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '0.8rem' }}>
                 
-                {authStep === 'password' && (
+                {authStep === 'password' && !getCachedAuthPref(authEmail) && (
                   <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
                       Or Sign In using{' '}
