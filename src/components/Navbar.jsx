@@ -4,7 +4,7 @@ function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword }) {
   return (
     <header className="app-header-nav">
       {/* Banner */}
-      {activeTab === 'home' && (
+      {activeTab !== 'login' && (
         <div className="brand-banner">
           <h1 className="banner-title">
             Sri Krishna <span className="banner-subtitle">Real Estate & Constructions</span>
@@ -46,7 +46,7 @@ function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword }) {
       )}
 
       {/* Navigation */}
-      <nav className="nav-links" style={{ position: 'relative' }}>
+      <nav className="nav-links">
         <button 
           className={`nav-tab-btn ${activeTab === 'home' ? 'active' : ''}`} 
           onClick={() => setActiveTab('home')}
@@ -77,41 +77,6 @@ function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword }) {
         >
           Cost Estimator
         </button>
-
-        {/* Compact Auth Section for other tabs */}
-        {activeTab !== 'home' && activeTab !== 'login' && (
-          <div className="nav-compact-auth">
-            {user ? (
-              <div className="auth-user-section">
-                <span className="auth-user-email" style={{ fontSize: '0.8rem' }}>👤 {user.email}</span>
-                <div className="auth-user-actions">
-                  <button 
-                    onClick={onChangePassword} 
-                    className="filter-btn auth-action-btn"
-                    style={{ padding: '4px 10px', fontSize: '0.72rem' }}
-                  >
-                    Set Password
-                  </button>
-                  <button 
-                    onClick={onLogout} 
-                    className="filter-btn auth-action-btn"
-                    style={{ padding: '4px 10px', fontSize: '0.72rem' }}
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <button 
-                onClick={() => setActiveTab('login')} 
-                className="gold-button" 
-                style={{ padding: '6px 12px', fontSize: '0.75rem', cursor: 'pointer' }}
-              >
-                Login
-              </button>
-            )}
-          </div>
-        )}
       </nav>
     </header>
   );

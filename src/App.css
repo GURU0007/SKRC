@@ -829,31 +829,5 @@ textarea.form-input {
   }
 }
 
-/* Compact Nav Auth Section */
-.nav-compact-auth {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-@media (min-width: 901px) {
-  .nav-compact-auth {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-}
-
-@media (max-width: 900px) {
-  .nav-compact-auth {
-    width: 100%;
-    justify-content: center;
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed var(--border-color);
-  }
-}
-
 
 
