@@ -163,6 +163,10 @@ const PlusIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
 );
 
+const FilterIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+);
+
 function Marketplace({ user, setUser, setActiveTab }) {
   const [activeSubTab, setActiveSubTab] = useState(() => {
     return localStorage.getItem('sri_krishna_marketplace_sub_tab') || 'browse';
@@ -190,6 +194,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
   const [showPendingOnly, setShowPendingOnly] = useState(() => {
     return localStorage.getItem('sri_krishna_marketplace_pending_only') === 'true';
   });
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('sri_krishna_marketplace_sub_tab', activeSubTab);
@@ -845,25 +850,39 @@ function Marketplace({ user, setUser, setActiveTab }) {
           
           {/* Filters Panel */}
           <div className="panel" style={{ padding: '16px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '15px' }}>
+            <div className="filters-grid-wrapper">
               
-              {/* Search Bar */}
-              <div style={{ position: 'relative' }}>
-                <input 
-                  type="text" 
-                  className="form-input" 
-                  placeholder="Search by location, title or landmark (e.g. Bellary Road)..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{ paddingLeft: '40px', width: '100%' }}
-                />
-                <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>
-                  <SearchIcon />
-                </span>
+              {/* Search Bar & Toggle Button */}
+              <div className="search-filter-row">
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input 
+                    type="text" 
+                    className="form-input" 
+                    placeholder="Search by location, title or landmark (e.g. Bellary Road)..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{ paddingLeft: '40px', width: '100%' }}
+                  />
+                  <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)' }}>
+                    <SearchIcon />
+                  </span>
+                </div>
+                
+                <button 
+                  className={`filter-toggle-btn ${showMobileFilters ? 'active' : ''}`}
+                  onClick={() => setShowMobileFilters(!showMobileFilters)}
+                  type="button"
+                >
+                  <FilterIcon /> 
+                  <span>Filters</span>
+                  {(filterType !== 'all' || filterPrice !== 'all' || filterFacing !== 'all') && (
+                    <span className="filter-active-badge"></span>
+                  )}
+                </button>
               </div>
 
               {/* Filtering dropdowns */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+              <div className={`marketplace-filters-container ${showMobileFilters ? 'mobile-show' : ''}`}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label style={{ fontSize: '0.75rem' }}>Property Type</label>
                   <CustomSelect 

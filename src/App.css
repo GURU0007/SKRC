@@ -747,5 +747,83 @@ textarea.form-input {
   }
 }
 
+/* Search & Filter Row */
+.search-filter-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.filter-toggle-btn {
+  display: none; /* Hidden on laptop/desktop */
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.filter-toggle-btn:hover {
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.filter-toggle-btn.active {
+  background: rgba(197, 168, 128, 0.15);
+  border-color: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
+.filter-active-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-gold);
+  box-shadow: 0 0 8px var(--accent-gold);
+}
+
+.filters-grid-wrapper {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+}
+
+/* Marketplace Filters Container (Always grid on desktop) */
+.marketplace-filters-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+/* Mobile responsive filters */
+@media (max-width: 768px) {
+  .filter-toggle-btn {
+    display: flex; /* Shown only on mobile */
+  }
+
+  .marketplace-filters-container {
+    display: none; /* Hidden by default on mobile */
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding-top: 5px;
+  }
+
+  .marketplace-filters-container.mobile-show {
+    display: grid; /* Toggled via JS state */
+  }
+}
+
 
 
