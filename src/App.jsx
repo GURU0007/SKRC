@@ -27,6 +27,9 @@ const PhoneIcon = () => (
 function App() {
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href);
+      const tabParam = url.searchParams.get('tab');
+      if (tabParam) return tabParam;
       return localStorage.getItem('sri_krishna_active_tab') || 'home';
     }
     return 'home';
@@ -61,24 +64,49 @@ function App() {
   });
   const [recoveryMode, setRecoveryMode] = useState(false);
 
+  // Sync activeTab changes to URL search parameters & browser history
   useEffect(() => {
+    const url = new URL(window.location.href);
+    const currentTab = url.searchParams.get('tab') || 'home';
+    if (currentTab !== activeTab) {
+      url.searchParams.set('tab', activeTab);
+      window.history.pushState({ tab: activeTab }, '', url.pathname + url.search);
+    }
     localStorage.setItem('sri_krishna_active_tab', activeTab);
   }, [activeTab]);
 
   useEffect(() => {
+    // Setup history Popstate routing
+    const url = new URL(window.location.href);
+    const initialTab = url.searchParams.get('tab') || activeTab;
+    window.history.replaceState({ tab: initialTab }, '', url.pathname + url.search);
+
+    const handlePopState = (event) => {
+      const tab = (event.state && event.state.tab) || 'home';
+      setActiveTab(tab);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
     const handleAuthCallback = async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const code = urlParams.get('code');
       const isCallback = code || window.location.hash.includes('access_token');
       
       if (code) {
-        try {
-          const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-          if (!error && data?.session) {
-            setUser(data.session.user);
+        // Prevent duplicate authentication exchanges on back/forward browser navigation
+        const processedCodes = JSON.parse(sessionStorage.getItem('sri_krishna_processed_codes') || '[]');
+        if (!processedCodes.includes(code)) {
+          try {
+            const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+            if (!error && data?.session) {
+              setUser(data.session.user);
+            }
+            processedCodes.push(code);
+            sessionStorage.setItem('sri_krishna_processed_codes', JSON.stringify(processedCodes));
+          } catch (err) {
+            console.error("Error exchanging code for session:", err);
           }
-        } catch (err) {
-          console.error("Error exchanging code for session:", err);
         }
       }
 
@@ -89,13 +117,14 @@ function App() {
         localStorage.setItem('sri_krishna_marketplace_pending_only', 'false');
         setActiveTab('marketplace');
         
-        // Clean up URL parameters to keep the address bar clean, but preserve the tid parameter
+        // Clean up URL parameters to keep the address bar clean, preserving the tab state and tid
         const params = new URLSearchParams(window.location.search);
         params.delete('code');
         params.delete('access_token');
+        params.set('tab', 'marketplace');
         const newSearch = params.toString();
         const newUrl = window.location.origin + window.location.pathname + (newSearch ? '?' + newSearch : '');
-        window.history.replaceState({}, document.title, newUrl);
+        window.history.replaceState({ tab: 'marketplace' }, document.title, newUrl);
       }
     };
 
@@ -113,7 +142,10 @@ function App() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleLogout = async () => {
