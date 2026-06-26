@@ -871,9 +871,19 @@ function Marketplace({ user, setUser, setActiveTab }) {
       return false;
     }
 
-    const textToSearch = `${prop.title} ${prop.location} ${prop.description}`.toLowerCase();
-    if (searchQuery && !textToSearch.includes(searchQuery.toLowerCase())) {
-      return false;
+    if (searchQuery) {
+      const query = searchQuery.trim().toLowerCase().replace(/[:\s]+/g, '');
+      const cleanId = prop.propertyCode ? String(prop.propertyCode) : '';
+      const cleanIdPrefixed = `id${cleanId}`;
+      const textToSearch = `${prop.title} ${prop.location} ${prop.description}`.toLowerCase().replace(/[:\s]+/g, '');
+
+      const matchText = textToSearch.includes(query);
+      const matchId = cleanId && cleanId.includes(query);
+      const matchPrefixedId = cleanIdPrefixed && cleanIdPrefixed.includes(query);
+
+      if (!matchText && !matchId && !matchPrefixedId) {
+        return false;
+      }
     }
     if (filterType !== 'all' && prop.type !== filterType) {
       return false;
