@@ -95,7 +95,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         if (error) {
           const errMsg = error.message || String(error);
           if (errMsg && typeof errMsg === 'string' && errMsg.toLowerCase().includes('invalid')) {
-            setAuthError('Incorrect password. If you signed up using a Verification Code (OTP), please log in using OTP by clicking the link below.');
+            setAuthError('Incorrect password. If you signed up using a Verification Code (OTP) or do not have a password set, please log in using OTP by clicking the link below. Once logged in, you can set a password using the \'Set Password\' button in the header.');
           } else {
             handleAuthError(error);
           }
@@ -121,7 +121,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
             setAuthPassword('');
             setAuthStep('email');
           } else {
-            setAuthError('Incorrect password. If you signed up using a Verification Code (OTP), please log in using OTP by clicking the link below.');
+            setAuthError('Incorrect password. If you signed up using a Verification Code (OTP) or do not have a password set, please log in using OTP by clicking the link below. Once logged in, you can set a password using the \'Set Password\' button in the header.');
           }
           setAuthLoading(false);
         }, 800);
@@ -131,7 +131,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
       console.error("Error in handleVerifyPassword:", err);
       const errMsg = err.message || String(err);
       if (errMsg && typeof errMsg === 'string' && errMsg.toLowerCase().includes('invalid')) {
-        setAuthError('Incorrect password. If you signed up using a Verification Code (OTP), please log in using OTP by clicking the link below.');
+        setAuthError('Incorrect password. If you signed up using a Verification Code (OTP) or do not have a password set, please log in using OTP by clicking the link below. Once logged in, you can set a password using the \'Set Password\' button in the header.');
       } else {
         setAuthError(errMsg);
       }
@@ -266,30 +266,6 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         });
         setAuthLoading(false);
       }, 800);
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    if (!authEmail) {
-      setAuthError('Please enter your email address in the Email field first.');
-      return;
-    }
-    setAuthError('');
-    setAuthLoading(true);
-    try {
-      if (isSupabaseConfigured) {
-        const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
-          redirectTo: window.location.origin
-        });
-        if (error) throw error;
-        setAuthError('Password reset link sent successfully! Please check your email inbox.');
-      } else {
-        setAuthError('Sandbox Mode: Password reset link simulation active.');
-      }
-    } catch (err) {
-      setAuthError(err.message || String(err));
-    } finally {
-      setAuthLoading(false);
     }
   };
 
@@ -511,15 +487,6 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                 
                 {authStep === 'password' && (
                   <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-                      Forgot your password?{' '}
-                      <span 
-                        onClick={handleForgotPassword} 
-                        style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
-                      >
-                        Reset Password via Email
-                      </span>
-                    </p>
                     <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
                       Or Sign In using{' '}
                       <span 
