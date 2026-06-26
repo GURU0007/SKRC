@@ -56,6 +56,19 @@ const ContactIcon = () => (
   </svg>
 );
 
+const EstimatorIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#estimator-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <defs>
+      <linearGradient id="estimator-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#e55d87" />
+        <stop offset="100%" stopColor="#5fc3e4" />
+      </linearGradient>
+    </defs>
+    <rect width="16" height="20" x="4" y="2" rx="2"/>
+    <line x1="12" x2="12" y1="18" y2="18"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="8" x2="16" y1="10" y2="10"/><line x1="8" x2="16" y1="14" y2="14"/>
+  </svg>
+);
+
 const ProfileIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#profile-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <defs>
@@ -70,7 +83,7 @@ const ProfileIcon = () => (
   </svg>
 );
 
-function Navbar({ activeTab, setActiveTab, isProfileDrawerOpen, onProfileClick }) {
+function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword, isProfileDrawerOpen, onProfileClick }) {
   const handleBackNavigation = () => {
     if (activeTab === 'home') {
       window.history.back();
@@ -98,6 +111,37 @@ function Navbar({ activeTab, setActiveTab, isProfileDrawerOpen, onProfileClick }
           </h1>
           <div className="banner-tagline">From Land to Landmark</div>
           <div className="banner-phone">Cell: +91 8985961113</div>
+
+          {/* Bottom Auth Section (Right above Navbar - Visible ONLY on Desktop via CSS) */}
+          <div className="banner-auth-header">
+            {user ? (
+              <div className="auth-user-section">
+                <span className="auth-user-email">👤 {user.email}</span>
+                <div className="auth-user-actions">
+                  <button 
+                    onClick={onChangePassword} 
+                    className="filter-btn auth-action-btn"
+                  >
+                    Set Password
+                  </button>
+                  <button 
+                    onClick={onLogout} 
+                    className="filter-btn auth-action-btn"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button 
+                onClick={() => setActiveTab('login')} 
+                className="gold-button" 
+                style={{ cursor: 'pointer' }}
+              >
+                Login
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -131,8 +175,19 @@ function Navbar({ activeTab, setActiveTab, isProfileDrawerOpen, onProfileClick }
           <ContactIcon />
           <span>Contact Us</span>
         </button>
+        
+        {/* Desktop-Only Tab: Cost Estimator */}
         <button 
-          className={`nav-tab-btn ${isProfileDrawerOpen || activeTab === 'login' ? 'active' : ''}`} 
+          className={`nav-tab-btn estimator-tab ${activeTab === 'estimator' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('estimator')}
+        >
+          <EstimatorIcon />
+          <span>Cost Estimator</span>
+        </button>
+
+        {/* Mobile-Only Tab: Profile Drawer Trigger */}
+        <button 
+          className={`nav-tab-btn profile-tab ${isProfileDrawerOpen || activeTab === 'login' ? 'active' : ''}`} 
           onClick={onProfileClick}
         >
           <ProfileIcon />

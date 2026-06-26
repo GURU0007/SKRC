@@ -246,6 +246,14 @@
   color: var(--accent-gold);
 }
 
+.estimator-tab {
+  display: flex !important;
+}
+
+.profile-tab {
+  display: none !important;
+}
+
 /* Hero Section */
 .hero-section {
   display: grid;
@@ -737,6 +745,29 @@ textarea.form-input {
 }
 
 @media (max-width: 600px) {
+  .estimator-tab {
+    display: none !important;
+  }
+  .profile-tab {
+    display: flex !important;
+  }
+  .banner-auth-header {
+    display: none !important;
+  }
+  .hero-stats {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 16px 12px !important;
+    width: 100% !important;
+    margin-top: 20px !important;
+  }
+  .hero-stats .stat-item {
+    justify-content: flex-start !important;
+  }
+  .hero-stats .stat-item:last-child {
+    grid-column: span 2 !important;
+    justify-self: center !important;
+  }
   .app-container {
     padding: 10px 10px 80px 10px; /* Added extra bottom padding to account for fixed bottom navigation bar */
     gap: 20px;

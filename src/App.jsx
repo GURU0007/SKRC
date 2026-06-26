@@ -192,6 +192,12 @@ function App() {
       <Navbar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
+        user={user}
+        onLogout={handleLogout}
+        onChangePassword={() => {
+          setRecoveryMode(true);
+          setActiveTab('login');
+        }}
         isProfileDrawerOpen={isProfileDrawerOpen}
         onProfileClick={() => setIsProfileDrawerOpen(true)}
       />
