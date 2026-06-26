@@ -459,6 +459,60 @@ function Marketplace({ user, setUser, setActiveTab }) {
           .order('created_at', { ascending: false });
 
         if (error) throw error;
+
+        // Auto-seed default properties if they are not in the DB and user is admin
+        const hasDefault = data && data.some(p => p.title === 'Premium East-Facing Plot (SriKrishna X1)');
+        if (!hasDefault && user && user.email === 'reddygarigsr@gmail.com') {
+          console.log("Default properties not found in Supabase. Seeding now...");
+          const seedData = DEFAULT_PROPERTIES.map(p => ({
+            title: p.title,
+            type: p.type,
+            price: p.price,
+            size: p.size,
+            facing: p.facing,
+            location: p.location,
+            description: p.description,
+            image_url: p.image,
+            contact_name: p.contactName,
+            contact_phone: p.contactPhone,
+            tag: p.tag,
+            user_id: user.id,
+            approved: true
+          }));
+
+          const { error: seedError } = await supabase.from('properties').insert(seedData);
+          if (!seedError) {
+            // Re-fetch to get the newly seeded properties with their database UUIDs
+            const refetched = await supabase
+              .from('properties')
+              .select('*')
+              .order('created_at', { ascending: false });
+            if (!refetched.error && refetched.data) {
+              const dbListings = refetched.data.map(item => ({
+                id: item.id,
+                title: item.title,
+                type: item.type,
+                price: Number(item.price),
+                size: item.size,
+                facing: item.facing,
+                location: item.location,
+                description: item.description,
+                image: item.image_url || '/logo.jpeg',
+                contactName: item.contact_name,
+                contactPhone: item.contact_phone,
+                tag: item.tag || 'Owner Listed',
+                date: item.created_at.split('T')[0],
+                user_id: item.user_id,
+                approved: item.approved
+              }));
+              setListings(dbListings);
+              setIsLoading(false);
+              return;
+            }
+          } else {
+            console.error("Failed to seed default properties:", seedError);
+          }
+        }
         
         // Map Supabase column names if they match camelCase or just merge
         const dbListings = data.map(item => ({
@@ -479,7 +533,13 @@ function Marketplace({ user, setUser, setActiveTab }) {
           approved: item.approved
         }));
 
-        setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...dbListings]);
+        // If the database has default properties, we ONLY show database listings.
+        // Otherwise, we merge the hardcoded ones so the page is not empty.
+        if (hasDefault) {
+          setListings(dbListings);
+        } else {
+          setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...dbListings]);
+        }
       } catch (err) {
         console.error('Failed to load from Supabase database. Falling back to local.', err);
         loadLocalFallbacks();
@@ -507,7 +567,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
   useEffect(() => {
     fetchProperties();
-  }, []);
+  }, [user]);
 
   const formatCurrency = (num) => {
     return new Intl.NumberFormat('en-IN', {
