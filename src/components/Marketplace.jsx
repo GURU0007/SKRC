@@ -308,7 +308,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           .update({
             title: editTitle,
             type: editType,
-            price: Number(editPrice),
+            price: editPrice,
             size: editSize,
             facing: editFacing,
             location: editLocation,
@@ -325,7 +325,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           ...selectedProp,
           title: editTitle,
           type: editType,
-          price: Number(editPrice),
+          price: editPrice,
           size: editSize,
           facing: editFacing,
           location: editLocation,
@@ -355,7 +355,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           id: selectedProp.id,
           title: editTitle,
           type: editType,
-          price: Number(editPrice),
+          price: editPrice,
           size: editSize,
           facing: editFacing,
           location: editLocation,
@@ -389,7 +389,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                   ...p,
                   title: editTitle,
                   type: editType,
-                  price: Number(editPrice),
+                  price: editPrice,
                   size: editSize,
                   facing: editFacing,
                   location: editLocation,
@@ -407,7 +407,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
               ...selectedProp,
               title: editTitle,
               type: editType,
-              price: Number(editPrice),
+              price: editPrice,
               size: editSize,
               facing: editFacing,
               location: editLocation,
@@ -611,12 +611,17 @@ function Marketplace({ user, setUser, setActiveTab }) {
     fetchProperties();
   }, [user]);
 
-  const formatCurrency = (num) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(num);
+  const formatCurrency = (val) => {
+    const num = Number(val);
+    if (!isNaN(num) && num > 0) {
+      return new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+      }).format(num);
+    }
+    // If it's text like '65 Lakhs', display as-is with ₹ prefix
+    return val ? `₹${val}` : '₹0';
   };
 
   // 4. Form submission handler for new listing
@@ -636,7 +641,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           .insert([{
             title: formTitle,
             type: formType,
-            price: Number(formPrice),
+            price: formPrice,
             size: formSize,
             facing: formFacing,
             location: formLocation,
@@ -661,7 +666,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
         id: `custom-${Date.now()}`,
         title: formTitle,
         type: formType,
-        price: Number(formPrice),
+        price: formPrice,
         size: formSize,
         facing: formFacing,
         location: formLocation,
@@ -828,7 +833,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
       return false;
     }
     if (filterPrice !== 'all') {
-      const price = prop.price;
+      const price = Number(prop.price) || 0;
       if (filterPrice === 'under-20') return price < 2000000;
       if (filterPrice === '20-50') return price >= 2000000 && price <= 5000000;
       if (filterPrice === '50-100') return price > 5000000 && price <= 10000000;
@@ -1117,8 +1122,9 @@ function Marketplace({ user, setUser, setActiveTab }) {
                       <div className="form-group">
                         <label>Asking Price (INR)</label>
                         <input 
-                          type="number" 
+                          type="text" 
                           className="form-input" 
+                          placeholder="e.g. 65,00,000 or 65 Lakhs"
                           value={editPrice}
                           onChange={(e) => setEditPrice(e.target.value)}
                           required 
@@ -1432,9 +1438,9 @@ function Marketplace({ user, setUser, setActiveTab }) {
                     <div className="form-group">
                       <label>Asking Price (INR)</label>
                       <input 
-                        type="number" 
+                        type="text" 
                         className="form-input" 
-                        placeholder="e.g. 4500000"
+                        placeholder="e.g. 65,00,000 or 65 Lakhs"
                         value={formPrice}
                         onChange={(e) => setFormPrice(e.target.value)}
                         required 
