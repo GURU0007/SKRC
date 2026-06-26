@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomSelect from './CustomSelect';
 
 // Icons
@@ -7,9 +7,21 @@ const CalculatorIcon = () => (
 );
 
 function Estimator() {
-  const [area, setArea] = useState('1500'); // Initialized as string to allow clearing
-  const [floors, setFloors] = useState(1);
-  const [quality, setQuality] = useState('premium'); // basic, premium, luxury
+  const [area, setArea] = useState(() => localStorage.getItem('sri_krishna_estimator_area') || '1500');
+  const [floors, setFloors] = useState(() => Number(localStorage.getItem('sri_krishna_estimator_floors')) || 1);
+  const [quality, setQuality] = useState(() => localStorage.getItem('sri_krishna_estimator_quality') || 'premium');
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_estimator_area', area);
+  }, [area]);
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_estimator_floors', String(floors));
+  }, [floors]);
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_estimator_quality', quality);
+  }, [quality]);
 
   // Convert to number for calculations, default to 0 if cleared
   const areaNum = Number(area) || 0;

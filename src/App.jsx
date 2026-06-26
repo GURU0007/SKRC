@@ -25,10 +25,19 @@ const PhoneIcon = () => (
 );
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('sri_krishna_active_tab') || 'home';
+    }
+    return 'home';
+  });
   const [prefilledPlot, setPrefilledPlot] = useState('');
   const [user, setUser] = useState(null);
   const [recoveryMode, setRecoveryMode] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_active_tab', activeTab);
+  }, [activeTab]);
 
   useEffect(() => {
     const handleAuthCallback = async () => {

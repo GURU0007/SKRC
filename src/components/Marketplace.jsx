@@ -164,18 +164,60 @@ const PlusIcon = () => (
 );
 
 function Marketplace({ user, setUser, setActiveTab }) {
-  const [activeSubTab, setActiveSubTab] = useState('browse'); // 'browse' or 'list'
+  const [activeSubTab, setActiveSubTab] = useState(() => {
+    return localStorage.getItem('sri_krishna_marketplace_sub_tab') || 'browse';
+  });
   const [listings, setListings] = useState([]);
   const [selectedProp, setSelectedProp] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filters State
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [filterPrice, setFilterPrice] = useState('all');
-  const [filterFacing, setFilterFacing] = useState('all');
-  const [showMyListingsOnly, setShowMyListingsOnly] = useState(false);
-  const [showPendingOnly, setShowPendingOnly] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(() => {
+    return localStorage.getItem('sri_krishna_marketplace_search') || '';
+  });
+  const [filterType, setFilterType] = useState(() => {
+    return localStorage.getItem('sri_krishna_marketplace_type') || 'all';
+  });
+  const [filterPrice, setFilterPrice] = useState(() => {
+    return localStorage.getItem('sri_krishna_marketplace_price') || 'all';
+  });
+  const [filterFacing, setFilterFacing] = useState(() => {
+    return localStorage.getItem('sri_krishna_marketplace_facing') || 'all';
+  });
+  const [showMyListingsOnly, setShowMyListingsOnly] = useState(() => {
+    return localStorage.getItem('sri_krishna_marketplace_my_listings') === 'true';
+  });
+  const [showPendingOnly, setShowPendingOnly] = useState(() => {
+    return localStorage.getItem('sri_krishna_marketplace_pending_only') === 'true';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_marketplace_sub_tab', activeSubTab);
+  }, [activeSubTab]);
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_marketplace_search', searchQuery);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_marketplace_type', filterType);
+  }, [filterType]);
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_marketplace_price', filterPrice);
+  }, [filterPrice]);
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_marketplace_facing', filterFacing);
+  }, [filterFacing]);
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_marketplace_my_listings', String(showMyListingsOnly));
+  }, [showMyListingsOnly]);
+
+  useEffect(() => {
+    localStorage.setItem('sri_krishna_marketplace_pending_only', String(showPendingOnly));
+  }, [showPendingOnly]);
 
   // Listing Form State
   const [formTitle, setFormTitle] = useState('');
