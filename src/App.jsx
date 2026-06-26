@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
-import { supabase, tabId } from './supabaseClient';
+import { supabase } from './supabaseClient';
 
 // Import local components
 import Navbar from './components/Navbar';
@@ -37,40 +37,39 @@ function App() {
   const [prefilledPlot, setPrefilledPlot] = useState('');
   const [user, setUser] = useState(() => {
     if (typeof window !== 'undefined') {
-      // Try tab-specific token first
-      if (tabId) {
-        const stored = localStorage.getItem(`sb-auth-token-${tabId}`);
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            if (parsed && parsed.user) return parsed.user;
-          } catch (e) {}
-        }
-      }
-      
-      // Fallback: search for general Supabase keys
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('sb-') && key.endsWith('-auth-token')) {
-          const item = localStorage.getItem(key);
-          try {
-            const parsed = JSON.parse(item);
-            if (parsed && parsed.user) return parsed.user;
-          } catch (e) {}
-        }
+      // Initialize synchronously from global persistent localStorage key
+      const stored = localStorage.getItem('sri-krishna-real-estate-auth');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.user) return parsed.user;
+        } catch (e) {}
       }
     }
     return null;
   });
   const [recoveryMode, setRecoveryMode] = useState(false);
 
-  // Sync activeTab changes to URL search parameters & browser history
+  // Sync activeTab changes to URL search parameters & browser history stack
   useEffect(() => {
     const url = new URL(window.location.href);
     const currentTab = url.searchParams.get('tab') || 'home';
     if (currentTab !== activeTab) {
-      url.searchParams.set('tab', activeTab);
-      window.history.pushState({ tab: activeTab }, '', url.pathname + url.search);
+      if (activeTab === 'home') {
+        url.searchParams.delete('tab');
+        // Replaced instead of pushed to keep history flat on home page (lets user swipe back to exit app)
+        window.history.replaceState({ tab: 'home' }, '', url.pathname + url.search);
+      } else {
+        url.searchParams.set('tab', activeTab);
+        const historyState = window.history.state;
+        if (historyState && historyState.tab !== 'home') {
+          // If we are already navigating subtabs, replace state to prevent pop history from accumulating
+          window.history.replaceState({ tab: activeTab }, '', url.pathname + url.search);
+        } else {
+          // First transition from home to subtab, push state
+          window.history.pushState({ tab: activeTab }, '', url.pathname + url.search);
+        }
+      }
     }
     localStorage.setItem('sri_krishna_active_tab', activeTab);
   }, [activeTab]);
@@ -150,14 +149,13 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      // Use local scope so that other active tab sessions are not invalidated on the server
-      await supabase.auth.signOut({ scope: 'local' });
+      await supabase.auth.signOut();
     } catch (err) {
       console.warn("Supabase signOut error:", err);
     }
-    // Delete only the current tab's storage key in localStorage
-    if (typeof window !== 'undefined' && tabId) {
-      window.localStorage.removeItem(`sb-auth-token-${tabId}`);
+    // Delete global persistent token key
+    if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('sri-krishna-real-estate-auth');
     }
     setUser(null);
   };
