@@ -20,6 +20,13 @@ function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword }) {
                   👤 {user.email}
                 </span>
                 <button 
+                  onClick={onChangePassword} 
+                  className="filter-btn" 
+                  style={{ borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)', cursor: 'pointer' }}
+                >
+                  Set Password
+                </button>
+                <button 
                   onClick={onLogout} 
                   className="filter-btn" 
                   style={{ borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)', cursor: 'pointer' }}
