@@ -776,7 +776,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           .eq('id', propId);
 
         if (error) throw error;
-        setSelectedProp(prev => prev ? { ...prev, approved: true } : null);
+        setSelectedProp(null);
         fetchProperties();
       } catch (err) {
         alert(err.message || 'Failed to approve listing.');
@@ -790,7 +790,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           const updated = parsed.map(p => p.id === propId ? { ...p, approved: true } : p);
           localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(updated));
           setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...updated]);
-          setSelectedProp(prev => prev ? { ...prev, approved: true } : null);
+          setSelectedProp(null);
         } catch (err) {}
       }
     }
