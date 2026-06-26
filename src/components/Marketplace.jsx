@@ -537,16 +537,12 @@ function Marketplace({ user, setUser, setActiveTab }) {
           approved: item.approved
         }));
 
-        // If the database has ANY properties, we ONLY show database listings.
-        // Otherwise, we merge the hardcoded ones so the page is not empty on first setup.
-        if (data && data.length > 0) {
-          setListings(dbListings);
-        } else {
-          setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...dbListings]);
-        }
+        // Database is the single source of truth when configured.
+        // We do not fall back to or merge local default properties.
+        setListings(dbListings);
       } catch (err) {
-        console.error('Failed to load from Supabase database. Falling back to local.', err);
-        loadLocalFallbacks();
+        console.error('Failed to load from Supabase database.', err);
+        setListings([]);
       }
     } else {
       loadLocalFallbacks();
