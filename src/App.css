@@ -58,6 +58,67 @@
   }
 }
 
+/* Auth user section (logged in state) */
+.auth-user-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.auth-user-email {
+  color: var(--accent-gold);
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.auth-user-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.auth-action-btn {
+  border-color: var(--accent-gold) !important;
+  color: var(--accent-gold) !important;
+  cursor: pointer;
+  padding: 6px 14px !important;
+  font-size: 0.78rem !important;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .auth-user-section {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .auth-user-email {
+    font-size: 0.75rem;
+    max-width: 90vw;
+    text-align: center;
+  }
+
+  .auth-user-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .auth-action-btn {
+    flex: 1;
+    max-width: 140px;
+    text-align: center;
+    padding: 8px 10px !important;
+    font-size: 0.72rem !important;
+  }
+}
+
 .banner-title {
   font-family: 'Cinzel Decorative', serif;
   font-size: 2.1rem;

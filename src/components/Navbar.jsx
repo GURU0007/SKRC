@@ -15,24 +15,22 @@ function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword }) {
           {/* Bottom Auth Section (Right above Navbar) */}
           <div className="banner-auth-header">
             {user ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                <span style={{ color: 'var(--accent-gold)', fontWeight: '600', fontSize: '0.85rem' }}>
-                  👤 {user.email}
-                </span>
-                <button 
-                  onClick={onChangePassword} 
-                  className="filter-btn" 
-                  style={{ borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)', cursor: 'pointer' }}
-                >
-                  Set Password
-                </button>
-                <button 
-                  onClick={onLogout} 
-                  className="filter-btn" 
-                  style={{ borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)', cursor: 'pointer' }}
-                >
-                  Sign Out
-                </button>
+              <div className="auth-user-section">
+                <span className="auth-user-email">👤 {user.email}</span>
+                <div className="auth-user-actions">
+                  <button 
+                    onClick={onChangePassword} 
+                    className="filter-btn auth-action-btn"
+                  >
+                    Set Password
+                  </button>
+                  <button 
+                    onClick={onLogout} 
+                    className="filter-btn auth-action-btn"
+                  >
+                    Sign Out
+                  </button>
+                </div>
               </div>
             ) : (
               <button 
