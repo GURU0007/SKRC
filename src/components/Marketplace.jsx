@@ -460,10 +460,14 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
         if (error) throw error;
 
-        // Auto-seed default properties if they are not in the DB and user is admin
-        const hasDefault = data && data.some(p => p.title === 'Premium East-Facing Plot (SriKrishna X1)');
-        if (!hasDefault && user && user.email === 'reddygarigsr@gmail.com') {
+        // Auto-seed default properties if they are not in the DB, have not been seeded locally, and user is admin
+        const defaultTitles = DEFAULT_PROPERTIES.map(p => p.title);
+        const hasAnyDefault = data && data.some(p => defaultTitles.includes(p.title));
+        const alreadySeeded = localStorage.getItem('sri_krishna_defaults_seeded_v1');
+
+        if (!alreadySeeded && !hasAnyDefault && user && user.email === 'reddygarigsr@gmail.com') {
           console.log("Default properties not found in Supabase. Seeding now...");
+          localStorage.setItem('sri_krishna_defaults_seeded_v1', 'true');
           const seedData = DEFAULT_PROPERTIES.map(p => ({
             title: p.title,
             type: p.type,
@@ -533,9 +537,9 @@ function Marketplace({ user, setUser, setActiveTab }) {
           approved: item.approved
         }));
 
-        // If the database has default properties, we ONLY show database listings.
-        // Otherwise, we merge the hardcoded ones so the page is not empty.
-        if (hasDefault) {
+        // If the database has ANY properties, we ONLY show database listings.
+        // Otherwise, we merge the hardcoded ones so the page is not empty on first setup.
+        if (data && data.length > 0) {
           setListings(dbListings);
         } else {
           setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...dbListings]);
