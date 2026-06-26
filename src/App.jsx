@@ -58,6 +58,9 @@ function App() {
 
       if (isCallback) {
         // Since the user returned via an auth link/OAuth redirect, land them directly in the marketplace
+        localStorage.setItem('sri_krishna_marketplace_sub_tab', 'browse');
+        localStorage.setItem('sri_krishna_marketplace_my_listings', 'false');
+        localStorage.setItem('sri_krishna_marketplace_pending_only', 'false');
         setActiveTab('marketplace');
         
         // Clean up URL parameters to keep the address bar clean, but preserve the tid parameter
@@ -104,6 +107,9 @@ function App() {
   // Redirect to marketplace automatically once user logs in from the login tab
   useEffect(() => {
     if (user && activeTab === 'login' && !recoveryMode) {
+      localStorage.setItem('sri_krishna_marketplace_sub_tab', 'browse');
+      localStorage.setItem('sri_krishna_marketplace_my_listings', 'false');
+      localStorage.setItem('sri_krishna_marketplace_pending_only', 'false');
       setActiveTab('marketplace');
     }
   }, [user, activeTab, recoveryMode]);
