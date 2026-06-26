@@ -80,7 +80,6 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
     <div className="panel full-width-card">
       <div className="panel-header">
         <h3 className="panel-title"><PhoneIcon /> Contact Us</h3>
-        <span className="brand-tagline">Sri Krishna Client Relations</span>
       </div>
       <div className="panel-content">
         <div className="contact-grid">
