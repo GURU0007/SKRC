@@ -637,6 +637,15 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                     pattern="\d{6}"
                     title="Please enter a 6-digit code"
                   />
+                  <div style={{ textAlign: 'right', marginTop: '6px', fontSize: '0.8rem' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>Didn't receive the code? </span>
+                    <span 
+                      onClick={handleResendOtp} 
+                      style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline', fontWeight: '500' }}
+                    >
+                      Resend Code
+                    </span>
+                  </div>
                 </div>
               )}
 
@@ -708,37 +717,26 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                   </div>
                 )}
 
-                {authStep === 'otp' && (
-                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {authStep === 'otp' && isExistingUser && (
+                  <div style={{ marginTop: '10px', marginBottom: '15px' }}>
                     <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-                      Didn't receive the code?{' '}
+                      Or Sign In using{' '}
                       <span 
-                        onClick={handleResendOtp} 
+                        onClick={() => {
+                          setAuthStep('password');
+                          setAuthError('');
+                          setOtpCode('');
+                        }} 
                         style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
                       >
-                        Resend Code
+                        Password
                       </span>
                     </p>
-                    {isExistingUser && (
-                      <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-                        Or Sign In using{' '}
-                        <span 
-                          onClick={() => {
-                            setAuthStep('password');
-                            setAuthError('');
-                            setOtpCode('');
-                          }} 
-                          style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
-                        >
-                          Password
-                        </span>
-                      </p>
-                    )}
                   </div>
                 )}
 
                 {authStep !== 'email' && (
-                  <p style={{ color: 'var(--text-secondary)', marginTop: (authStep === 'password' || authStep === 'register-password') ? '10px' : '0px' }}>
+                  <p style={{ color: 'var(--text-secondary)', marginTop: (authStep === 'password' || authStep === 'register-password' || authStep === 'otp') ? '15px' : '0px' }}>
                     Want to change email?{' '}
                     <span 
                       onClick={() => { 
