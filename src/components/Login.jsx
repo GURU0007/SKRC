@@ -57,6 +57,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [isExistingUser, setIsExistingUser] = useState(false);
+  const [pendingPassword, setPendingPassword] = useState('');
 
   const handleAuthError = (err) => {
     if (!err) return;
@@ -167,6 +168,31 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
 
     try {
       if (isSupabaseConfigured) {
+        // Check if user has a password set
+        let hasPassword = true;
+        try {
+          const { data, error } = await supabase.rpc('has_password_set', {
+            user_email: authEmail
+          });
+          if (!error && data !== null) {
+            hasPassword = data;
+          }
+        } catch (err) {
+          console.warn("Error calling has_password_set:", err);
+        }
+
+        if (!hasPassword) {
+          // No password set yet (e.g. user registered via Google OAuth or OTP)
+          setPendingPassword(authPassword);
+          const success = await sendOtpForEmail(authEmail, false);
+          if (success) {
+            setAuthStep('otp');
+            setAuthError('We noticed you haven\'t set a password for this account yet (e.g. you signed in using Social Login or OTP). For your security, we have sent a Verification Code to your email. Enter it below to log in and automatically set this password.');
+          }
+          setAuthLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase.auth.signInWithPassword({
           email: authEmail,
           password: authPassword
@@ -253,8 +279,21 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         finalData = retry.data;
       }
 
-      // Save preference: this user prefers OTP login
-      saveAuthPreference(authEmail, 'otp');
+      // If we have a pending password from the check, update their password now!
+      if (pendingPassword) {
+        try {
+          await supabase.auth.updateUser({ password: pendingPassword });
+          // Save preference: password (since they now successfully set a password)
+          await saveAuthPreference(authEmail, 'password');
+        } catch (passErr) {
+          console.warn("Failed to set user password after OTP:", passErr);
+        }
+        setPendingPassword('');
+      } else {
+        // Save preference: this user prefers OTP login
+        saveAuthPreference(authEmail, 'otp');
+      }
+
       setUser(finalData?.user || finalData?.session?.user || null);
       setAuthEmail('');
       setOtpCode('');
@@ -263,7 +302,12 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
       // Sandbox mock OTP verify
       setTimeout(() => {
         if (otpCode === '123456') {
-          saveAuthPreference(authEmail, 'otp');
+          if (pendingPassword) {
+            saveAuthPreference(authEmail, 'password');
+            setPendingPassword('');
+          } else {
+            saveAuthPreference(authEmail, 'otp');
+          }
           setUser({
             id: 'mock-sandbox-user-id',
             email: authEmail,

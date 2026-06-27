@@ -130,3 +130,19 @@ ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS property_code INT DEFAULT
 -- Backfill existing NULL records
 UPDATE public.properties SET property_code = nextval('public.property_id_seq') WHERE property_code IS NULL;
 
+-- 11. RPC Function to check if a user has a password set (returns false if registered via social/OTP only)
+CREATE OR REPLACE FUNCTION public.has_password_set(user_email TEXT)
+RETURNS BOOLEAN
+SECURITY DEFINER
+AS $$
+DECLARE
+  has_pass BOOLEAN;
+BEGIN
+  SELECT (encrypted_password IS NOT NULL AND encrypted_password <> '') INTO has_pass
+  FROM auth.users
+  WHERE email = LOWER(user_email);
+  
+  RETURN COALESCE(has_pass, FALSE);
+END;
+$$ LANGUAGE plpgsql;
+
