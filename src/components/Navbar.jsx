@@ -136,18 +136,18 @@ function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword, isP
           <span>Home</span>
         </button>
         <button 
-          className={`nav-tab-btn ${activeTab === 'marketplace' ? 'active' : ''}`} 
-          onClick={() => setActiveTab('marketplace')}
-        >
-          <MarketplaceIcon />
-          <span>Marketplace</span>
-        </button>
-        <button 
           className={`nav-tab-btn ${activeTab === 'projects' ? 'active' : ''}`} 
           onClick={() => setActiveTab('projects')}
         >
           <PlotsIcon />
           <span>Plots Layout</span>
+        </button>
+        <button 
+          className={`nav-tab-btn ${activeTab === 'marketplace' ? 'active' : ''}`} 
+          onClick={() => setActiveTab('marketplace')}
+        >
+          <MarketplaceIcon />
+          <span>Marketplace</span>
         </button>
         <button 
           className={`nav-tab-btn ${activeTab === 'contact' ? 'active' : ''}`} 
