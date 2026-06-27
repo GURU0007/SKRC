@@ -187,7 +187,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
           const success = await sendOtpForEmail(authEmail, false);
           if (success) {
             setAuthStep('otp');
-            setAuthError('We noticed you haven\'t set a password for this account yet (e.g. you signed in using Social Login or OTP). For your security, we have sent a Verification Code to your email. Enter it below to log in and automatically set this password.');
+            setAuthError('We have sent a verification code to your email.');
           }
           setAuthLoading(false);
           return;
@@ -483,10 +483,22 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
             <button 
               type="submit" 
               className="gold-button" 
-              style={{ width: '100%', marginTop: '10px' }}
+              style={{ 
+                width: '100%', 
+                marginTop: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                minHeight: '44px'
+              }}
               disabled={authLoading}
             >
-              {authLoading ? 'Updating Password...' : 'Save New Password'}
+              {authLoading ? (
+                <span className="btn-spinner" aria-label="loading"></span>
+              ) : (
+                'Save New Password'
+              )}
             </button>
             {user && (
               <p style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.8rem' }}>
@@ -631,18 +643,28 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
               <button 
                 type="submit" 
                 className="gold-button" 
-                style={{ width: '100%', marginTop: '10px' }}
+                style={{ 
+                  width: '100%', 
+                  marginTop: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  minHeight: '44px'
+                }}
                 disabled={authLoading}
               >
-                {authLoading 
-                  ? 'Processing...' 
-                  : authStep === 'email' 
+                {authLoading ? (
+                  <span className="btn-spinner" aria-label="loading"></span>
+                ) : (
+                  authStep === 'email' 
                     ? 'Continue' 
                     : authStep === 'password' 
                       ? 'Sign In' 
                       : authStep === 'register-password'
                         ? 'Register & Create Account'
-                        : 'Verify & Sign In'}
+                        : 'Verify & Sign In'
+                )}
               </button>
 
               {/* Bottom navigation links to switch steps */}
