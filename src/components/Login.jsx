@@ -340,6 +340,16 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     setAuthLoading(false);
   };
 
+  const handleResendOtp = async () => {
+    setAuthError('');
+    setAuthLoading(true);
+    const success = await sendOtpForEmail(authEmail, !isExistingUser);
+    if (success) {
+      setAuthError('We have sent a verification code to your email.');
+    }
+    setAuthLoading(false);
+  };
+
   const handleGoogleSignIn = async () => {
     setAuthError('');
     setAuthLoading(true);
@@ -695,6 +705,35 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                         Verification Code (OTP)
                       </span>
                     </p>
+                  </div>
+                )}
+
+                {authStep === 'otp' && (
+                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+                      Didn't receive the code?{' '}
+                      <span 
+                        onClick={handleResendOtp} 
+                        style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
+                      >
+                        Resend Code
+                      </span>
+                    </p>
+                    {isExistingUser && (
+                      <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
+                        Or Sign In using{' '}
+                        <span 
+                          onClick={() => {
+                            setAuthStep('password');
+                            setAuthError('');
+                            setOtpCode('');
+                          }} 
+                          style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
+                          Password
+                        </span>
+                      </p>
+                    )}
                   </div>
                 )}
 
