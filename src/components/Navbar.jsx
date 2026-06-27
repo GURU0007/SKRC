@@ -2,7 +2,7 @@ import React from 'react';
 
 
 const HomeIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#home-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="url(#home-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <defs>
       <linearGradient id="home-grad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#d4af37" />
@@ -14,8 +14,21 @@ const HomeIcon = () => (
   </svg>
 );
 
+const PlotsIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="url(#plots-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <defs>
+      <linearGradient id="plots-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="100%" stopColor="#38ef7d" />
+        <stop offset="0%" stopColor="#11998e" />
+      </linearGradient>
+    </defs>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+    <circle cx="12" cy="10" r="3" />
+  </svg>
+);
+
 const MarketplaceIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#market-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="url(#market-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <defs>
       <linearGradient id="market-grad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#00b4db" />
@@ -23,26 +36,13 @@ const MarketplaceIcon = () => (
       </linearGradient>
     </defs>
     <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/>
-    <path d="m3 9 9-7 9 7"/>
-    <path d="M9 22V12h6v10"/>
-  </svg>
-);
-
-const PlotsIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#plots-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <defs>
-      <linearGradient id="plots-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stopColor="#11998e" />
-        <stop offset="100%" stopColor="#38ef7d" />
-      </linearGradient>
-    </defs>
-    <rect width="18" height="18" x="3" y="3" rx="2"/>
-    <path d="M9 3v18"/><path d="M15 3v18"/><path d="M3 9h18"/><path d="M3 15h18"/>
+    <path d="M3 9V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4" />
+    <circle cx="12" cy="14" r="2" />
   </svg>
 );
 
 const ContactIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#contact-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="url(#contact-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <defs>
       <linearGradient id="contact-grad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#ff416c" />
@@ -54,7 +54,7 @@ const ContactIcon = () => (
 );
 
 const EstimatorIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#estimator-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="url(#estimator-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <defs>
       <linearGradient id="estimator-grad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#e55d87" />
@@ -67,7 +67,7 @@ const EstimatorIcon = () => (
 );
 
 const ProfileIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#profile-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+  <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="url(#profile-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
     <defs>
       <linearGradient id="profile-grad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stopColor="#8a2387" />

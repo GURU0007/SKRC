@@ -215,11 +215,11 @@
   cursor: pointer;
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: 1.0rem;
   transition: all 0.15s ease;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .nav-tab-btn svg {
@@ -868,7 +868,7 @@ textarea.form-input {
     overflow: visible;
   }
   .nav-tab-btn {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     padding: 4px 2px;
     flex: 1;
     display: flex;
@@ -883,11 +883,11 @@ textarea.form-input {
     white-space: nowrap;
   }
   .nav-tab-btn svg {
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
   }
   .nav-tab-btn span {
-    font-size: 0.65rem;
+    font-size: 0.72rem;
     font-weight: 500;
   }
   .nav-tab-btn.active {
