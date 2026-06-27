@@ -10,6 +10,8 @@ import Estimator from './components/Estimator';
 import Marketplace from './components/Marketplace';
 import Contact from './components/Contact';
 import Login from './components/Login';
+import SmartHomes from './components/SmartHomes';
+import LayoutsInfo from './components/LayoutsInfo';
 
 // Icons used for home dashboard preview panels
 const CompassIcon = () => (
@@ -282,6 +284,16 @@ function App() {
         {/* Tab 5: Contact Booking Request */}
         {activeTab === 'contact' && (
           <Contact prefilledPlot={prefilledPlot} setPrefilledPlot={setPrefilledPlot} />
+        )}
+
+        {/* Tab 6: Smart Homes & Solar */}
+        {activeTab === 'smarthomes' && (
+          <SmartHomes />
+        )}
+
+        {/* Tab 7: Layouts Info */}
+        {activeTab === 'layoutsinfo' && (
+          <LayoutsInfo />
         )}
 
       </div>
