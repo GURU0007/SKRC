@@ -78,6 +78,14 @@ const CompassIcon = () => (
   </svg>
 );
 
+const ArrowLeft = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+);
+
+const ArrowRight = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+);
+
 const sliderSlides = [
   {
     image: 'sk_villa.jpg',
@@ -169,6 +177,16 @@ function Hero() {
     };
   }, []);
 
+  const handlePrevSlide = (e) => {
+    e.stopPropagation();
+    setCurrentSlide((prev) => (prev === 0 ? sliderSlides.length - 1 : prev - 1));
+  };
+
+  const handleNextSlide = (e) => {
+    e.stopPropagation();
+    setCurrentSlide((prev) => (prev + 1) % sliderSlides.length);
+  };
+
   const activeSlide = sliderSlides[currentSlide];
 
   return (
@@ -218,6 +236,22 @@ function Hero() {
               />
             ))}
           </div>
+          
+          {/* Left/Right manual navigation arrows */}
+          <button 
+            className="slider-arrow prev" 
+            onClick={handlePrevSlide} 
+            aria-label="Previous Slide"
+          >
+            <ArrowLeft />
+          </button>
+          <button 
+            className="slider-arrow next" 
+            onClick={handleNextSlide} 
+            aria-label="Next Slide"
+          >
+            <ArrowRight />
+          </button>
         </div>
       </div>
     </section>

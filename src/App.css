@@ -1197,5 +1197,56 @@ textarea.form-input {
   background: rgba(197, 168, 128, 0.05);
 }
 
+/* Slider Arrows */
+.slider-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(11, 15, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 15;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.slider-arrow:hover {
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
+  color: #0b0f17;
+  box-shadow: 0 0 12px rgba(197, 168, 128, 0.4);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.slider-arrow.prev {
+  left: 12px;
+}
+
+.slider-arrow.next {
+  right: 12px;
+}
+
+@media (max-width: 600px) {
+  .slider-arrow {
+    width: 30px;
+    height: 30px;
+  }
+  .slider-arrow.prev {
+    left: 8px;
+  }
+  .slider-arrow.next {
+    right: 8px;
+  }
+}
+
+
 
 
