@@ -16,14 +16,14 @@ const FilterIcon = () => (
 
 const LAYOUTS = [
   {
-    id: 'srikrishna-x1',
-    name: 'SriKrishna X1 Layout',
-    location: 'Byluppala Road, Kurnool District',
+    id: 'srikrishna-phase-1',
+    name: 'Sri Krishna Phase 1',
+    location: 'Byluppala Village, Kurnool',
     area: 'Byluppala',
-    distance: 8.5, // 8.5 km from Kurnool Center
+    distance: 60, // 60 km from Kurnool Center
     ratePerCent: 180000,
     totalPlots: 21,
-    description: 'Premium land layout development located on the Bellary-Kurnool Highway. Features wide roads, underground drainage, and electricity connections.',
+    description: 'Premium land layout development located in Byluppala Village, Kurnool. Features wide roads, underground drainage, and electricity connections.',
     plots: [
       { id: 1, number: "P-01", width: 30, length: 46, status: "available", orientation: "East-Facing" },
       { id: 2, number: "P-02", width: 36, length: 56, status: "available", orientation: "East-Facing" },
@@ -51,7 +51,7 @@ const LAYOUTS = [
 ];
 
 function Projects({ handleSelectPlotInquiry }) {
-  const [selectedLayoutId, setSelectedLayoutId] = useState('srikrishna-x1');
+  const [selectedLayoutId, setSelectedLayoutId] = useState('srikrishna-phase-1');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterArea, setFilterArea] = useState('all');
   const [filterRadius, setFilterRadius] = useState('all');
@@ -176,9 +176,9 @@ function Projects({ handleSelectPlotInquiry }) {
                 onChange={(val) => { setFilterRadius(val); setShowMobileFilters(false); }} 
                 options={[
                   { value: 'all', label: 'Any Distance from Center' },
-                  { value: '3', label: 'Within 3 km Radius' },
-                  { value: '5', label: 'Within 5 km Radius' },
-                  { value: '10', label: 'Within 10 km Radius' }
+                  { value: '10', label: 'Within 10 km Radius' },
+                  { value: '30', label: 'Within 30 km Radius' },
+                  { value: '75', label: 'Within 75 km Radius' }
                 ]}
               />
             </div>
