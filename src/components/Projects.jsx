@@ -91,6 +91,13 @@ function Projects({ handleSelectPlotInquiry }) {
     }
   }, [selectedLayoutId]);
 
+  // Auto-select layout project if exactly 1 matches filters
+  useEffect(() => {
+    if (filteredLayouts.length === 1) {
+      setSelectedLayoutId(filteredLayouts[0].id);
+    }
+  }, [filteredLayouts]);
+
   // Price budget utility checks
   const getPlotValue = (plot, ratePerCent) => {
     return ((plot.width * plot.length) / 435.6) * ratePerCent;
@@ -237,53 +244,25 @@ function Projects({ handleSelectPlotInquiry }) {
         </div>
       </div>
 
-      {/* Grid selector of matching layouts */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <h5 style={{ color: 'var(--accent-gold)', letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.75rem', margin: 0 }}>
+      {/* Selector of matching layouts */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <h5 style={{ color: 'var(--accent-gold)', letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.75rem', margin: 0, fontWeight: '600' }}>
           Select Layout Project ({filteredLayouts.length} found)
         </h5>
-        
         {filteredLayouts.length === 0 ? (
-          <div className="panel" style={{ padding: '40px', textAlign: 'center' }}>
-            <span style={{ fontSize: '2rem', display: 'block' }}>🔍</span>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '10px' }}>No layouts match your filter options. Try clearing search text or increasing radius filter.</p>
+          <div className="panel" style={{ padding: '30px', textAlign: 'center' }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: 0 }}>No layouts match your filter options. Try clearing search text or increasing radius filter.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
-            {filteredLayouts.map(layout => {
-              const isSelected = layout.id === selectedLayoutId;
-              return (
-                <div 
-                  key={layout.id}
-                  className={`panel ${isSelected ? 'selected-layout-card' : ''}`}
-                  onClick={() => setSelectedLayoutId(layout.id)}
-                  style={{
-                    padding: '16px',
-                    cursor: 'pointer',
-                    border: isSelected ? '1px solid var(--accent-gold)' : '1px solid var(--border-color)',
-                    background: isSelected ? 'linear-gradient(135deg, rgba(197, 168, 128, 0.08) 0%, rgba(11, 15, 23, 0.3) 100%)' : 'var(--bg-card)',
-                    transition: 'all 0.2s ease',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                    <h4 style={{ fontSize: '0.95rem', color: isSelected ? 'var(--accent-gold)' : '#fff', fontWeight: '700', margin: 0 }}>
-                      {layout.name}
-                    </h4>
-                    <span style={{ fontSize: '0.65rem', background: 'rgba(197,168,128,0.12)', border: '1px solid rgba(197,168,128,0.2)', padding: '2px 6px', borderRadius: '4px', color: 'var(--accent-gold)', fontWeight: '600' }}>
-                      {layout.distance} km
-                    </span>
-                  </div>
-                  <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', margin: '0 0 10px', height: '2.4rem', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: '1.2' }}>
-                    {layout.description}
-                  </p>
-                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
-                    <span style={{ color: 'var(--text-secondary)' }}>Rate: <strong>{formatCurrency(layout.ratePerCent)} / Cent</strong></span>
-                    <span style={{ color: 'var(--accent-gold)' }}>{layout.totalPlots} Plots</span>
-                  </div>
-                </div>
-              );
-            })}
+          <div style={{ maxWidth: '420px', width: '100%' }}>
+            <CustomSelect 
+              value={selectedLayoutId} 
+              onChange={setSelectedLayoutId}
+              options={filteredLayouts.map(layout => ({
+                value: layout.id,
+                label: `${layout.name} (${layout.location})`
+              }))}
+            />
           </div>
         )}
       </div>
