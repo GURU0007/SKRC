@@ -56,7 +56,10 @@ function Projects({ handleSelectPlotInquiry }) {
   const [filterPrice, setFilterPrice] = useState('all');
   const [filterRadius, setFilterRadius] = useState('all');
   const [plotFilter, setPlotFilter] = useState('all');
-  const [selectedPlot, setSelectedPlot] = useState(null);
+  const [selectedPlot, setSelectedPlot] = useState(() => {
+    const initialLayout = LAYOUTS.find(l => l.id === 'srikrishna-phase-1') || LAYOUTS[0];
+    return (initialLayout && initialLayout.plots && initialLayout.plots[0]) || null;
+  });
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const filterContainerRef = useRef(null);
@@ -79,9 +82,13 @@ function Projects({ handleSelectPlotInquiry }) {
     };
   }, [showMobileFilters]);
 
-  // Reset plot selection when active layout shifts
+  // Set first plot as selected when active layout shifts
   useEffect(() => {
-    setSelectedPlot(null);
+    if (activeLayout && activeLayout.plots && activeLayout.plots.length > 0) {
+      setSelectedPlot(activeLayout.plots[0]);
+    } else {
+      setSelectedPlot(null);
+    }
   }, [selectedLayoutId]);
 
   // Price budget utility checks
