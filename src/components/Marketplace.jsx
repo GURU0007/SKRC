@@ -187,14 +187,20 @@ const getImagesArray = (imgField) => {
   if (Array.isArray(imgField) && imgField.length > 0) return imgField;
   return [imgField];
 };
+// Global memory cache to store listings client-side across tab switches (SWR pattern)
+let cachedListings = null;
 
 function Marketplace({ user, setUser, setActiveTab }) {
   const [activeSubTab, setActiveSubTab] = useState(() => {
     return localStorage.getItem('sri_krishna_marketplace_sub_tab') || 'browse';
   });
-  const [listings, setListings] = useState([]);
+  const [listings, setListings] = useState(() => {
+    return cachedListings || [];
+  });
   const [selectedProp, setSelectedProp] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(() => {
+    return !cachedListings;
+  });
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState(() => {
@@ -301,7 +307,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
         img.src = reader.result;
         img.onload = () => {
           const canvas = document.createElement('canvas');
-          const max_width = 800;
+          const max_width = 600;
           const scale = max_width / img.width;
           
           if (img.width > max_width) {
@@ -315,7 +321,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           
-          const base64Data = canvas.toDataURL('image/jpeg', 0.65);
+          const base64Data = canvas.toDataURL('image/jpeg', 0.45);
           resolve(base64Data);
         };
       };
@@ -540,7 +546,9 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
   // 2. Fetch Listings (Supabase with Local Fallback)
   const fetchProperties = async () => {
-    setIsLoading(true);
+    if (!cachedListings) {
+      setIsLoading(true);
+    }
     if (isSupabaseConfigured) {
       try {
         const { data, error } = await supabase
@@ -572,6 +580,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
         // Database is the single source of truth when configured.
         // We do not fall back to or merge local default properties.
+        cachedListings = dbListings;
         setListings(dbListings);
       } catch (err) {
         console.error('Failed to load from Supabase database.', err);
