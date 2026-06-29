@@ -56,14 +56,45 @@ function Projects({ handleSelectPlotInquiry }) {
   const [filterPrice, setFilterPrice] = useState('all');
   const [filterRadius, setFilterRadius] = useState('all');
   const [plotFilter, setPlotFilter] = useState('all');
-  const [selectedPlot, setSelectedPlot] = useState(() => {
-    const initialLayout = LAYOUTS.find(l => l.id === 'srikrishna-phase-1') || LAYOUTS[0];
-    return (initialLayout && initialLayout.plots && initialLayout.plots[0]) || null;
-  });
   const [showMobileFilters, setShowMobileFilters] = useState(false);
-
   const filterContainerRef = useRef(null);
+
+  // Price budget utility checks
+  const getPlotValue = (plot, ratePerCent) => {
+    return ((plot.width * plot.length) / 435.6) * ratePerCent;
+  };
+
+  const isPlotInBudget = (plot, ratePerCent, budgetRange) => {
+    if (budgetRange === 'all') return true;
+    const val = getPlotValue(plot, ratePerCent);
+    if (budgetRange === 'under-20') return val < 2000000;
+    if (budgetRange === '20-50') return val >= 2000000 && val <= 5000000;
+    if (budgetRange === '50-100') return val >= 5000000 && val <= 10000000;
+    if (budgetRange === 'over-100') return val > 10000000;
+    return true;
+  };
+
+  // Filter layouts
+  const filteredLayouts = LAYOUTS.filter(layout => {
+    if (searchQuery && !layout.name.toLowerCase().includes(searchQuery.toLowerCase()) && !layout.location.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+    if (filterRadius !== 'all') {
+      const limit = Number(filterRadius);
+      if (layout.distance > limit) return false;
+    }
+    if (filterPrice !== 'all') {
+      const hasMatchingPlot = layout.plots.some(p => isPlotInBudget(p, layout.ratePerCent, filterPrice));
+      if (!hasMatchingPlot) return false;
+    }
+    return true;
+  });
+
   const activeLayout = LAYOUTS.find(l => l.id === selectedLayoutId) || LAYOUTS[0];
+
+  const [selectedPlot, setSelectedPlot] = useState(() => {
+    return (activeLayout && activeLayout.plots && activeLayout.plots[0]) || null;
+  });
 
   // Click outside detector to close mobile filters drawer
   useEffect(() => {
@@ -97,37 +128,6 @@ function Projects({ handleSelectPlotInquiry }) {
       setSelectedLayoutId(filteredLayouts[0].id);
     }
   }, [filteredLayouts]);
-
-  // Price budget utility checks
-  const getPlotValue = (plot, ratePerCent) => {
-    return ((plot.width * plot.length) / 435.6) * ratePerCent;
-  };
-
-  const isPlotInBudget = (plot, ratePerCent, budgetRange) => {
-    if (budgetRange === 'all') return true;
-    const val = getPlotValue(plot, ratePerCent);
-    if (budgetRange === 'under-20') return val < 2000000;
-    if (budgetRange === '20-50') return val >= 2000000 && val <= 5000000;
-    if (budgetRange === '50-100') return val >= 5000000 && val <= 10000000;
-    if (budgetRange === 'over-100') return val > 10000000;
-    return true;
-  };
-
-  // Filter layouts
-  const filteredLayouts = LAYOUTS.filter(layout => {
-    if (searchQuery && !layout.name.toLowerCase().includes(searchQuery.toLowerCase()) && !layout.location.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    if (filterRadius !== 'all') {
-      const limit = Number(filterRadius);
-      if (layout.distance > limit) return false;
-    }
-    if (filterPrice !== 'all') {
-      const hasMatchingPlot = layout.plots.some(p => isPlotInBudget(p, layout.ratePerCent, filterPrice));
-      if (!hasMatchingPlot) return false;
-    }
-    return true;
-  });
 
   // Filter plots inside active layout
   const filteredPlots = activeLayout.plots.filter(p => {
