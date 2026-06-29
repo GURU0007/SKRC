@@ -183,7 +183,7 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
                   onChange={setType} 
                   options={[
                     { value: 'construction', label: 'Residential/Commercial Construction Quote' },
-                    { value: 'plot-booking', label: 'Plot Booking / Purchase (SriKrishna X1)' },
+                    { value: 'plot-booking', label: 'Plot Booking / Purchase' },
                     { value: 'legal', label: 'Legal title verification / Approvals' }
                   ]}
                 />
