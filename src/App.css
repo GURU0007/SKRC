@@ -143,6 +143,10 @@
   filter: drop-shadow(0 2px 8px rgba(197, 168, 128, 0.3));
 }
 
+.banner-title-main {
+  white-space: nowrap;
+}
+
 .banner-subtitle {
   font-family: 'Cinzel Decorative', serif;
   font-size: 2.1rem;
@@ -152,6 +156,13 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: 2px;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .brand-banner:not(.brand-banner-home) {
+    display: none;
+  }
 }
 
 .banner-tagline {

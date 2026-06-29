@@ -86,9 +86,9 @@ function Navbar({ activeTab, setActiveTab, user, onLogout, onChangePassword, isP
 
       {/* Banner */}
       {activeTab !== 'login' && (
-        <div className="brand-banner">
+        <div className={`brand-banner ${activeTab === 'home' ? 'brand-banner-home' : ''}`}>
           <h1 className="banner-title">
-            Sri Krishna <span className="banner-subtitle">Real Estate & Constructions</span>
+            <span className="banner-title-main">Sri Krishna</span> <span className="banner-subtitle">Real Estate & Constructions</span>
           </h1>
           <div className="banner-tagline">From Land to Landmark</div>
           <div className="banner-phone">Cell: +91 8985961113</div>
