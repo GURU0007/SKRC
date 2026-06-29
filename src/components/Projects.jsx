@@ -53,7 +53,7 @@ const LAYOUTS = [
 function Projects({ handleSelectPlotInquiry }) {
   const [selectedLayoutId, setSelectedLayoutId] = useState('srikrishna-phase-1');
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterArea, setFilterArea] = useState('all');
+  const [filterPrice, setFilterPrice] = useState('all');
   const [filterRadius, setFilterRadius] = useState('all');
   const [plotFilter, setPlotFilter] = useState('all');
   const [selectedPlot, setSelectedPlot] = useState(null);
@@ -84,24 +84,41 @@ function Projects({ handleSelectPlotInquiry }) {
     setSelectedPlot(null);
   }, [selectedLayoutId]);
 
+  // Price budget utility checks
+  const getPlotValue = (plot, ratePerCent) => {
+    return ((plot.width * plot.length) / 435.6) * ratePerCent;
+  };
+
+  const isPlotInBudget = (plot, ratePerCent, budgetRange) => {
+    if (budgetRange === 'all') return true;
+    const val = getPlotValue(plot, ratePerCent);
+    if (budgetRange === 'under-20') return val < 2000000;
+    if (budgetRange === '20-50') return val >= 2000000 && val <= 5000000;
+    if (budgetRange === '50-100') return val >= 5000000 && val <= 10000000;
+    if (budgetRange === 'over-100') return val > 10000000;
+    return true;
+  };
+
   // Filter layouts
   const filteredLayouts = LAYOUTS.filter(layout => {
     if (searchQuery && !layout.name.toLowerCase().includes(searchQuery.toLowerCase()) && !layout.location.toLowerCase().includes(searchQuery.toLowerCase())) {
-      return false;
-    }
-    if (filterArea !== 'all' && layout.area.toLowerCase() !== filterArea.toLowerCase()) {
       return false;
     }
     if (filterRadius !== 'all') {
       const limit = Number(filterRadius);
       if (layout.distance > limit) return false;
     }
+    if (filterPrice !== 'all') {
+      const hasMatchingPlot = layout.plots.some(p => isPlotInBudget(p, layout.ratePerCent, filterPrice));
+      if (!hasMatchingPlot) return false;
+    }
     return true;
   });
 
   // Filter plots inside active layout
   const filteredPlots = activeLayout.plots.filter(p => {
-    if (plotFilter === 'available') return p.status === 'available';
+    if (plotFilter === 'available' && p.status !== 'available') return false;
+    if (!isPlotInBudget(p, activeLayout.ratePerCent, filterPrice)) return false;
     return true;
   });
 
@@ -154,7 +171,7 @@ function Projects({ handleSelectPlotInquiry }) {
             >
               <FilterIcon /> 
               <span>Filters</span>
-              {(filterArea !== 'all' || filterRadius !== 'all') && (
+              {(filterPrice !== 'all' || filterRadius !== 'all') && (
                 <span className="filter-active-badge"></span>
               )}
             </button>
@@ -162,25 +179,18 @@ function Projects({ handleSelectPlotInquiry }) {
 
           {/* Filtering Drawer */}
           <div className={`marketplace-filters-container ${showMobileFilters ? 'mobile-show' : ''}`} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
-            {/* Area Filter */}
+            {/* Budget Filter */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.75rem' }}>Locality / Area</label>
+              <label style={{ fontSize: '0.75rem' }}>Budget Range</label>
               <CustomSelect 
-                value={filterArea} 
-                onChange={(val) => { setFilterArea(val); setShowMobileFilters(false); }} 
+                value={filterPrice} 
+                onChange={(val) => { setFilterPrice(val); setShowMobileFilters(false); }} 
                 options={[
-                  { value: 'all', label: 'All Localities' },
-                  { value: 'byluppala', label: 'Byluppala' },
-                  { value: 'mamidalapadu', label: 'Mamidalapadu' },
-                  { value: 'joharapuram', label: 'Joharapuram Road' },
-                  { value: 'bellary-road', label: 'Bellary Road' },
-                  { value: 'nandyal-road', label: 'Nandyal Road' },
-                  { value: 'gooty-road', label: 'Gooty Road' },
-                  { value: 'budhawarapeta', label: 'Budhawarapeta' },
-                  { value: 'sampath-nagar', label: 'Sampath Nagar' },
-                  { value: 'dinnedevarapadu', label: 'Dinnedevarapadu' },
-                  { value: 'panchalingala', label: 'Panchalingala' },
-                  { value: 'munagalapadu', label: 'Munagalapadu' }
+                  { value: 'all', label: 'Any Price Range' },
+                  { value: 'under-20', label: 'Under ₹20 Lakhs' },
+                  { value: '20-50', label: '₹20 Lakhs - ₹50 Lakhs' },
+                  { value: '50-100', label: '₹50 Lakhs - ₹1 Crore' },
+                  { value: 'over-100', label: 'Above ₹1 Crore' }
                 ]}
               />
             </div>
