@@ -23,7 +23,7 @@ function LayoutsInfo() {
             Premium Gated <span style={{ color: 'var(--accent-gold)' }}>Land Layout Mappings</span>
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: '1.6', maxWidth: '720px', margin: '0 auto' }}>
-            Sri Krishna Real Estate & Constructions designs and develops high-standard gated community land layouts in Byluppala, Kurnool. Every plot registry is fully backed by legal sanctions, structured layouts, and modern essential amenities.
+            Sri Krishna Real Estate & Constructions designs and develops high-standard gated community land layouts in Kurnool. Every plot registry is fully backed by legal sanctions, structured layouts, and modern essential amenities.
           </p>
         </div>
       </div>
