@@ -98,6 +98,21 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
             </div>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              <h4 style={{ 
+                fontFamily: 'var(--font-display)', 
+                color: '#fff', 
+                fontSize: '1.2rem', 
+                borderBottom: '1px solid var(--border-color)', 
+                paddingBottom: '10px', 
+                marginBottom: '5px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                Send an Enquiry / Request Quote
+              </h4>
+
               <div className="form-group">
                 <label>Your Full Name</label>
                 <input 
@@ -189,7 +204,21 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
           )}
 
           {/* Contact Details stack */}
-          <div className="info-cards-stack">
+          <div className="info-cards-stack" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <h4 style={{ 
+              fontFamily: 'var(--font-display)', 
+              color: '#fff', 
+              fontSize: '1.2rem', 
+              borderBottom: '1px solid var(--border-color)', 
+              paddingBottom: '10px', 
+              marginBottom: '5px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+              Office Details & Location
+            </h4>
             <div className="info-item-card">
               <span className="info-icon-wrapper"><PhoneIcon /></span>
               <div className="info-meta">
