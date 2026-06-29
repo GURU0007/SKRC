@@ -47,52 +47,6 @@ const LAYOUTS = [
       { id: 20, number: "P-20", width: 49, length: 50, status: "sold", orientation: "East-Facing" },
       { id: 21, number: "P-21", width: 17.5, length: 49, status: "available", orientation: "East-Facing" }
     ]
-  },
-  {
-    id: 'srikrishna-x2',
-    name: 'SriKrishna X2 (Golden Springs)',
-    location: 'Mamidalapadu Suburb, Kurnool Town',
-    area: 'Mamidalapadu',
-    distance: 4.2, // 4.2 km from Kurnool Center
-    ratePerCent: 220000,
-    totalPlots: 12,
-    description: 'Luxurious gated layout with lush landscaping, park layouts, and 33-feet concrete roads. Excellent location near town center.',
-    plots: [
-      { id: 1, number: "A-01", width: 40, length: 60, status: "available", orientation: "East-Facing" },
-      { id: 2, number: "A-02", width: 40, length: 60, status: "available", orientation: "West-Facing" },
-      { id: 3, number: "A-03", width: 30, length: 50, status: "sold", orientation: "East-Facing" },
-      { id: 4, number: "A-04", width: 30, length: 50, status: "available", orientation: "East-Facing" },
-      { id: 5, number: "A-05", width: 35, length: 55, status: "sold", orientation: "North-Facing" },
-      { id: 6, number: "A-06", width: 35, length: 55, status: "available", orientation: "South-Facing" },
-      { id: 7, number: "A-07", width: 40, length: 60, status: "available", orientation: "East-Facing" },
-      { id: 8, number: "A-08", width: 40, length: 60, status: "sold", orientation: "West-Facing" },
-      { id: 9, number: "A-09", width: 30, length: 50, status: "available", orientation: "North-Facing" },
-      { id: 10, number: "A-10", width: 30, length: 50, status: "available", orientation: "East-Facing" },
-      { id: 11, number: "A-11", width: 35, length: 55, status: "available", orientation: "East-Facing" },
-      { id: 12, number: "A-12", width: 35, length: 55, status: "sold", orientation: "West-Facing" }
-    ]
-  },
-  {
-    id: 'srikrishna-valley',
-    name: 'SriKrishna Premium Valley',
-    location: 'Joharapuram Road, Kurnool Town',
-    area: 'Joharapuram',
-    distance: 2.8, // 2.8 km from Kurnool Center
-    ratePerCent: 250000,
-    totalPlots: 10,
-    description: 'Super-premium villa community layout within city bounds. Close to schools, hospitals, and shopping zones.',
-    plots: [
-      { id: 1, number: "V-01", width: 50, length: 80, status: "available", orientation: "East-Facing" },
-      { id: 2, number: "V-02", width: 50, length: 80, status: "available", orientation: "East-Facing" },
-      { id: 3, number: "V-03", width: 40, length: 70, status: "sold", orientation: "West-Facing" },
-      { id: 4, number: "V-04", width: 40, length: 70, status: "available", orientation: "East-Facing" },
-      { id: 5, number: "V-05", width: 40, length: 70, status: "available", orientation: "North-Facing" },
-      { id: 6, number: "V-06", width: 40, length: 70, status: "sold", orientation: "East-Facing" },
-      { id: 7, number: "V-07", width: 45, length: 75, status: "available", orientation: "East-Facing" },
-      { id: 8, number: "V-08", width: 45, length: 75, status: "available", orientation: "West-Facing" },
-      { id: 9, number: "V-09", width: 50, length: 80, status: "available", orientation: "East-Facing" },
-      { id: 10, number: "V-10", width: 50, length: 80, status: "sold", orientation: "North-Facing" }
-    ]
   }
 ];
 
