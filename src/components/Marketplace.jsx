@@ -1055,8 +1055,16 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
           {/* Grid Layout of Property Cards */}
           {isLoading ? (
-            <div className="panel" style={{ padding: '60px', textAlign: 'center' }}>
-              <span style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>Loading properties...</span>
+            <div className="panel" style={{ padding: '80px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
+              <div style={{
+                width: '40px',
+                height: '40px',
+                border: '3px solid rgba(197, 168, 128, 0.15)',
+                borderTopColor: 'var(--accent-gold)',
+                borderRadius: '50%',
+                animation: 'btn-spin 1s linear infinite'
+              }}></div>
+              <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: '500' }}>Loading premium listings...</span>
             </div>
           ) : filteredListings.length === 0 ? (
             <div className="panel" style={{ padding: '60px', textAlign: 'center' }}>
