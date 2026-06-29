@@ -931,7 +931,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
       )}
 
       {/* Tab Switcher Headers */}
-      <div className="panel" style={{ padding: '8px 12px', display: 'flex', gap: '30px', background: 'rgba(0,0,0,0.1)', flexWrap: 'wrap' }}>
+      <div className="panel marketplace-tabs-header">
         <button 
           className={`filter-btn ${activeSubTab === 'browse' && !showMyListingsOnly && !showPendingOnly ? 'active' : ''}`}
           onClick={() => { setActiveSubTab('browse'); setShowMyListingsOnly(false); setShowPendingOnly(false); setFormSubmitted(false); }}
