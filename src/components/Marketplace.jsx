@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import CustomSelect from './CustomSelect';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
@@ -222,6 +222,24 @@ function Marketplace({ user, setUser, setActiveTab }) {
     return localStorage.getItem('sri_krishna_marketplace_pending_only') === 'true';
   });
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const filterContainerRef = useRef(null);
+
+  // Click outside detector to close mobile filters drawer
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (filterContainerRef.current && !filterContainerRef.current.contains(event.target)) {
+        setShowMobileFilters(false);
+      }
+    }
+    if (showMobileFilters) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showMobileFilters]);
 
   useEffect(() => {
     localStorage.setItem('sri_krishna_marketplace_sub_tab', activeSubTab);
@@ -970,7 +988,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
           {/* Filters Panel */}
-          <div className="panel" style={{ padding: '16px' }}>
+          <div className="panel" style={{ padding: '16px' }} ref={filterContainerRef}>
             <div className="filters-grid-wrapper">
               
               {/* Search Bar & Toggle Button */}
