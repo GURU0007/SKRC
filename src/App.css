@@ -697,6 +697,56 @@
   order: 1; /* Contact details (dad's details) comes first on mobile */
 }
 
+/* Mobile Contact Sub-tabs Header */
+.contact-subtabs-nav {
+  display: none; /* Hidden on desktop */
+}
+
+@media (max-width: 768px) {
+  .contact-subtabs-nav {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 12px;
+    width: 100%;
+  }
+
+  .contact-subtab-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 10px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    text-align: center;
+  }
+
+  .contact-subtab-btn.active {
+    background: rgba(197, 168, 128, 0.15);
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+  }
+
+  /* Responsive toggles */
+  .contact-grid .contact-form-col.hide-mobile,
+  .contact-grid .contact-info-col.hide-mobile {
+    display: none !important;
+  }
+
+  .contact-grid .contact-form-col.show-mobile,
+  .contact-grid .contact-info-col.show-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+}
+
 @media (min-width: 768px) {
   .contact-grid {
     grid-template-columns: 1.1fr 0.9fr;
@@ -706,6 +756,13 @@
   }
   .contact-grid > :nth-child(2) {
     order: 0; /* Reset default order on desktop */
+  }
+  .contact-grid .contact-form-col.hide-mobile,
+  .contact-grid .contact-info-col.hide-mobile,
+  .contact-grid .contact-form-col.show-mobile,
+  .contact-grid .contact-info-col.show-mobile {
+    display: flex !important;
+    flex-direction: column !important;
   }
 }
 

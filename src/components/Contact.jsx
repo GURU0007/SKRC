@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomSelect from './CustomSelect';
 
 // Icons
@@ -15,6 +15,14 @@ const MapPinIcon = () => (
 );
 
 function Contact({ prefilledPlot, setPrefilledPlot }) {
+  const [activeSubTab, setActiveSubTab] = useState(prefilledPlot ? 'enquiry' : 'info');
+
+  useEffect(() => {
+    if (prefilledPlot) {
+      setActiveSubTab('enquiry');
+    }
+  }, [prefilledPlot]);
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -82,10 +90,29 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
         <h3 className="panel-title"><PhoneIcon /> Contact Us</h3>
       </div>
       <div className="panel-content">
+        {/* Mobile-only Sub-tabs Nav */}
+        <div className="contact-subtabs-nav">
+          <button 
+            type="button"
+            className={`contact-subtab-btn ${activeSubTab === 'info' ? 'active' : ''}`}
+            onClick={() => setActiveSubTab('info')}
+          >
+            Contact Details
+          </button>
+          <button 
+            type="button"
+            className={`contact-subtab-btn ${activeSubTab === 'enquiry' ? 'active' : ''}`}
+            onClick={() => setActiveSubTab('enquiry')}
+          >
+            Submit Enquiry
+          </button>
+        </div>
+
         <div className="contact-grid">
           
-          {/* Contact form */}
-          {submitted ? (
+          {/* Left Column: Enquiry Form Container */}
+          <div className={`contact-form-col ${activeSubTab === 'enquiry' ? 'show-mobile' : 'hide-mobile'}`}>
+            {submitted ? (
             <div style={{ padding: '40px', textAlign: 'center', background: '#1c2436', borderRadius: '6px', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
               <span style={{ fontSize: '2.5rem', color: 'var(--accent-green)' }}>✓</span>
               <h4 style={{ marginTop: '15px' }}>Quote Request Submitted Successfully</h4>
@@ -202,9 +229,10 @@ function Contact({ prefilledPlot, setPrefilledPlot }) {
               </button>
             </form>
           )}
+          </div>
 
-          {/* Contact Details stack */}
-          <div className="info-cards-stack" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* Right Column: Contact Details stack */}
+          <div className={`info-cards-stack contact-info-col ${activeSubTab === 'info' ? 'show-mobile' : 'hide-mobile'}`} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <h4 style={{ 
               fontFamily: 'var(--font-display)', 
               color: '#fff', 
