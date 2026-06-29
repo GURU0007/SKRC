@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import CustomSelect from './CustomSelect';
 
 // Icons
@@ -55,12 +55,29 @@ function Projects({ handleSelectPlotInquiry }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterArea, setFilterArea] = useState('all');
   const [filterRadius, setFilterRadius] = useState('all');
-  const [sortBy, setSortBy] = useState('default');
   const [plotFilter, setPlotFilter] = useState('all');
   const [selectedPlot, setSelectedPlot] = useState(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  const filterContainerRef = useRef(null);
   const activeLayout = LAYOUTS.find(l => l.id === selectedLayoutId) || LAYOUTS[0];
+
+  // Click outside detector to close mobile filters drawer
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (filterContainerRef.current && !filterContainerRef.current.contains(event.target)) {
+        setShowMobileFilters(false);
+      }
+    }
+    if (showMobileFilters) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showMobileFilters]);
 
   // Reset plot selection when active layout shifts
   useEffect(() => {
@@ -80,14 +97,6 @@ function Projects({ handleSelectPlotInquiry }) {
       if (layout.distance > limit) return false;
     }
     return true;
-  });
-
-  // Sort layouts
-  const sortedLayouts = [...filteredLayouts].sort((a, b) => {
-    if (sortBy === 'price-low') return a.ratePerCent - b.ratePerCent;
-    if (sortBy === 'price-high') return b.ratePerCent - a.ratePerCent;
-    if (sortBy === 'distance') return a.distance - b.distance;
-    return 0;
   });
 
   // Filter plots inside active layout
@@ -116,7 +125,7 @@ function Projects({ handleSelectPlotInquiry }) {
     <div className="projects-layout-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
       {/* Search & Filter Header Panel */}
-      <div className="panel" style={{ padding: '16px' }}>
+      <div className="panel" style={{ padding: '16px' }} ref={filterContainerRef}>
         <h4 style={{ color: '#fff', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <CompassIcon /> Filter Sri Krishna Construction Layouts
         </h4>
@@ -145,14 +154,14 @@ function Projects({ handleSelectPlotInquiry }) {
             >
               <FilterIcon /> 
               <span>Filters</span>
-              {(filterArea !== 'all' || filterRadius !== 'all' || sortBy !== 'default') && (
+              {(filterArea !== 'all' || filterRadius !== 'all') && (
                 <span className="filter-active-badge"></span>
               )}
             </button>
           </div>
 
-          {/* Filtering dropdowns */}
-          <div className={`marketplace-filters-container ${showMobileFilters ? 'mobile-show' : ''}`}>
+          {/* Filtering Drawer */}
+          <div className={`marketplace-filters-container ${showMobileFilters ? 'mobile-show' : ''}`} style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
             {/* Area Filter */}
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label style={{ fontSize: '0.75rem' }}>Locality / Area</label>
@@ -160,42 +169,52 @@ function Projects({ handleSelectPlotInquiry }) {
                 value={filterArea} 
                 onChange={(val) => { setFilterArea(val); setShowMobileFilters(false); }} 
                 options={[
-                  { value: 'all', label: 'All Areas / Localities' },
-                  { value: 'byluppala', label: 'Byluppala Road' },
-                  { value: 'mamidalapadu', label: 'Mamidalapadu Suburbs' },
-                  { value: 'joharapuram', label: 'Joharapuram Road' }
+                  { value: 'all', label: 'All Localities' },
+                  { value: 'byluppala', label: 'Byluppala' },
+                  { value: 'mamidalapadu', label: 'Mamidalapadu' },
+                  { value: 'joharapuram', label: 'Joharapuram Road' },
+                  { value: 'bellary-road', label: 'Bellary Road' },
+                  { value: 'nandyal-road', label: 'Nandyal Road' },
+                  { value: 'gooty-road', label: 'Gooty Road' },
+                  { value: 'budhawarapeta', label: 'Budhawarapeta' },
+                  { value: 'sampath-nagar', label: 'Sampath Nagar' },
+                  { value: 'dinnedevarapadu', label: 'Dinnedevarapadu' },
+                  { value: 'panchalingala', label: 'Panchalingala' },
+                  { value: 'munagalapadu', label: 'Munagalapadu' }
                 ]}
               />
             </div>
 
-            {/* Radius Filter */}
+            {/* Distance Radius Range Slider */}
             <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.75rem' }}>Distance Radius</label>
-              <CustomSelect 
-                value={filterRadius} 
-                onChange={(val) => { setFilterRadius(val); setShowMobileFilters(false); }} 
-                options={[
-                  { value: 'all', label: 'Any Distance from Center' },
-                  { value: '10', label: 'Within 10 km Radius' },
-                  { value: '30', label: 'Within 30 km Radius' },
-                  { value: '75', label: 'Within 75 km Radius' }
-                ]}
-              />
-            </div>
-
-            {/* Sorting */}
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label style={{ fontSize: '0.75rem' }}>Sort Layouts By</label>
-              <CustomSelect 
-                value={sortBy} 
-                onChange={(val) => { setSortBy(val); setShowMobileFilters(false); }} 
-                options={[
-                  { value: 'default', label: 'Sort by: Featured' },
-                  { value: 'price-low', label: 'Price: Low to High' },
-                  { value: 'price-high', label: 'Price: High to Low' },
-                  { value: 'distance', label: 'Distance: Nearest first' }
-                ]}
-              />
+              <label style={{ fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                <span>Distance Radius</span>
+                <span style={{ color: 'var(--accent-gold)', fontWeight: '600' }}>
+                  {filterRadius === 'all' || Number(filterRadius) >= 100 ? 'Any distance' : `${filterRadius} km`}
+                </span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>0 km</span>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="100" 
+                  value={filterRadius === 'all' ? 100 : filterRadius}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    setFilterRadius(val >= 100 ? 'all' : val);
+                  }}
+                  style={{
+                    flex: 1,
+                    accentColor: 'var(--accent-gold)',
+                    background: 'var(--border-color)',
+                    height: '6px',
+                    borderRadius: '3px',
+                    cursor: 'pointer'
+                  }}
+                />
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>100 km</span>
+              </div>
             </div>
           </div>
         </div>
@@ -204,17 +223,17 @@ function Projects({ handleSelectPlotInquiry }) {
       {/* Grid selector of matching layouts */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
         <h5 style={{ color: 'var(--accent-gold)', letterSpacing: '1px', textTransform: 'uppercase', fontSize: '0.75rem', margin: 0 }}>
-          Select Layout Project ({sortedLayouts.length} found)
+          Select Layout Project ({filteredLayouts.length} found)
         </h5>
         
-        {sortedLayouts.length === 0 ? (
+        {filteredLayouts.length === 0 ? (
           <div className="panel" style={{ padding: '40px', textAlign: 'center' }}>
             <span style={{ fontSize: '2rem', display: 'block' }}>🔍</span>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '10px' }}>No layouts match your filter options. Try clearing search text or radius filter.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '10px' }}>No layouts match your filter options. Try clearing search text or increasing radius filter.</p>
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '15px' }}>
-            {sortedLayouts.map(layout => {
+            {filteredLayouts.map(layout => {
               const isSelected = layout.id === selectedLayoutId;
               return (
                 <div 
