@@ -86,6 +86,24 @@ function Estimator() {
         <span className="brand-tagline">Unbundle construction material budgets</span>
       </div>
       <div className="panel-content">
+        {/* Premium Disclaimer Bar */}
+        <div style={{ 
+          background: 'rgba(212, 175, 55, 0.08)', 
+          borderLeft: '4px solid var(--accent-gold)', 
+          padding: '12px 16px', 
+          borderRadius: '4px', 
+          marginBottom: '20px',
+          fontSize: '0.85rem',
+          color: 'var(--text-primary)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          lineHeight: '1.4'
+        }}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <span><strong>Disclaimer:</strong> This is a rough estimate. Please visit our office to get a detailed price breakdown.</span>
+        </div>
+
         <div className="estimator-layout-grid">
           
           {/* Inputs Panel */}
