@@ -66,7 +66,7 @@ function Projects({ handleSelectPlotInquiry }) {
       <div className="panel full-width-card">
         <div className="panel-header">
           <h3 className="panel-title">
-            SriKrishna X1 (Kurnool): Premium Plots Layout
+            SriKrishna X1 (Byluppala, Kurnool): Premium Plots Layout
           </h3>
           <div className="filter-bar">
             <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>Show All Plots</button>
@@ -80,7 +80,7 @@ function Projects({ handleSelectPlotInquiry }) {
             {/* Interactive Grid representing Land Plots */}
             <div className="plot-blueprint">
               <div className="blueprint-header">
-                <span>PROJECT LOCATION: KURNOOL DISTRICT</span>
+                <span>PROJECT LOCATION: BYLUPPALA VILLAGE, KURNOOL DIST.</span>
                 <span>TOTAL PLOTS: 21</span>
               </div>
               <div className="plots-grid">
