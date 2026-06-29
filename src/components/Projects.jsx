@@ -10,6 +10,10 @@ const SearchIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
 );
 
+const FilterIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+);
+
 const LAYOUTS = [
   {
     id: 'srikrishna-x1',
@@ -100,6 +104,7 @@ function Projects({ handleSelectPlotInquiry }) {
   const [sortBy, setSortBy] = useState('default');
   const [plotFilter, setPlotFilter] = useState('all');
   const [selectedPlot, setSelectedPlot] = useState(null);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const activeLayout = LAYOUTS.find(l => l.id === selectedLayoutId) || LAYOUTS[0];
 
@@ -162,62 +167,82 @@ function Projects({ handleSelectPlotInquiry }) {
           <CompassIcon /> Filter Sri Krishna Construction Layouts
         </h4>
         
-        <div className="filters-grid-wrapper" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
-          {/* Search bar */}
-          <div style={{ position: 'relative' }}>
-            <input 
-              type="text" 
-              className="form-input" 
-              placeholder="Search layout name or area..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ paddingLeft: '35px', width: '100%' }}
-            />
-            <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', display: 'flex' }}>
-              <SearchIcon />
-            </span>
+        <div className="filters-grid-wrapper">
+          {/* Search Bar & Toggle Button */}
+          <div className="search-filter-row">
+            <div style={{ position: 'relative', flex: 1 }}>
+              <input 
+                type="text" 
+                className="form-input" 
+                placeholder="Search layout name or area..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                style={{ paddingLeft: '40px', width: '100%' }}
+              />
+              <span style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-secondary)', display: 'flex' }}>
+                <SearchIcon />
+              </span>
+            </div>
+
+            <button 
+              className={`filter-toggle-btn ${showMobileFilters ? 'active' : ''}`}
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
+              type="button"
+            >
+              <FilterIcon /> 
+              <span>Filters</span>
+              {(filterArea !== 'all' || filterRadius !== 'all' || sortBy !== 'default') && (
+                <span className="filter-active-badge"></span>
+              )}
+            </button>
           </div>
 
-          {/* Area Filter */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <CustomSelect 
-              value={filterArea} 
-              onChange={setFilterArea} 
-              options={[
-                { value: 'all', label: 'All Areas / Localities' },
-                { value: 'byluppala', label: 'Byluppala Road' },
-                { value: 'mamidalapadu', label: 'Mamidalapadu Suburbs' },
-                { value: 'joharapuram', label: 'Joharapuram Road' }
-              ]}
-            />
-          </div>
+          {/* Filtering dropdowns */}
+          <div className={`marketplace-filters-container ${showMobileFilters ? 'mobile-show' : ''}`}>
+            {/* Area Filter */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label style={{ fontSize: '0.75rem' }}>Locality / Area</label>
+              <CustomSelect 
+                value={filterArea} 
+                onChange={setFilterArea} 
+                options={[
+                  { value: 'all', label: 'All Areas / Localities' },
+                  { value: 'byluppala', label: 'Byluppala Road' },
+                  { value: 'mamidalapadu', label: 'Mamidalapadu Suburbs' },
+                  { value: 'joharapuram', label: 'Joharapuram Road' }
+                ]}
+              />
+            </div>
 
-          {/* Radius Filter */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <CustomSelect 
-              value={filterRadius} 
-              onChange={setFilterRadius} 
-              options={[
-                { value: 'all', label: 'Any Distance from Center' },
-                { value: '3', label: 'Within 3 km Radius' },
-                { value: '5', label: 'Within 5 km Radius' },
-                { value: '10', label: 'Within 10 km Radius' }
-              ]}
-            />
-          </div>
+            {/* Radius Filter */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label style={{ fontSize: '0.75rem' }}>Distance Radius</label>
+              <CustomSelect 
+                value={filterRadius} 
+                onChange={setFilterRadius} 
+                options={[
+                  { value: 'all', label: 'Any Distance from Center' },
+                  { value: '3', label: 'Within 3 km Radius' },
+                  { value: '5', label: 'Within 5 km Radius' },
+                  { value: '10', label: 'Within 10 km Radius' }
+                ]}
+              />
+            </div>
 
-          {/* Sorting */}
-          <div className="form-group" style={{ margin: 0 }}>
-            <CustomSelect 
-              value={sortBy} 
-              onChange={setSortBy} 
-              options={[
-                { value: 'default', label: 'Sort by: Featured' },
-                { value: 'price-low', label: 'Price: Low to High' },
-                { value: 'price-high', label: 'Price: High to Low' },
-                { value: 'distance', label: 'Distance: Nearest first' }
-              ]}
-            />
+            {/* Sorting */}
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label style={{ fontSize: '0.75rem' }}>Sort Layouts By</label>
+              <CustomSelect 
+                value={sortBy} 
+                onChange={setSortBy} 
+                options={[
+                  { value: 'default', label: 'Sort by: Featured' },
+                  { value: 'price-low', label: 'Price: Low to High' },
+                  { value: 'price-high', label: 'Price: High to Low' },
+                  { value: 'distance', label: 'Distance: Nearest first' }
+                ]}
+              />
+            </div>
           </div>
         </div>
       </div>
