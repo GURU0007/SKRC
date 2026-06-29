@@ -1060,15 +1060,30 @@ textarea.form-input {
     display: flex; /* Shown only on mobile */
   }
 
+  .filters-grid-wrapper {
+    position: relative;
+  }
+
   .marketplace-filters-container {
     display: none; /* Hidden by default on mobile */
     grid-template-columns: 1fr;
     gap: 12px;
-    padding-top: 5px;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: rgba(17, 24, 39, 0.98);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 16px;
+    z-index: 500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65);
   }
 
   .marketplace-filters-container.mobile-show {
-    display: grid; /* Toggled via JS state */
+    display: grid !important; /* Toggled via JS state */
   }
 }
 

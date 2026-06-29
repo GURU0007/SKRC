@@ -158,7 +158,7 @@ function Projects({ handleSelectPlotInquiry }) {
               <label style={{ fontSize: '0.75rem' }}>Locality / Area</label>
               <CustomSelect 
                 value={filterArea} 
-                onChange={setFilterArea} 
+                onChange={(val) => { setFilterArea(val); setShowMobileFilters(false); }} 
                 options={[
                   { value: 'all', label: 'All Areas / Localities' },
                   { value: 'byluppala', label: 'Byluppala Road' },
@@ -173,7 +173,7 @@ function Projects({ handleSelectPlotInquiry }) {
               <label style={{ fontSize: '0.75rem' }}>Distance Radius</label>
               <CustomSelect 
                 value={filterRadius} 
-                onChange={setFilterRadius} 
+                onChange={(val) => { setFilterRadius(val); setShowMobileFilters(false); }} 
                 options={[
                   { value: 'all', label: 'Any Distance from Center' },
                   { value: '3', label: 'Within 3 km Radius' },
@@ -188,7 +188,7 @@ function Projects({ handleSelectPlotInquiry }) {
               <label style={{ fontSize: '0.75rem' }}>Sort Layouts By</label>
               <CustomSelect 
                 value={sortBy} 
-                onChange={setSortBy} 
+                onChange={(val) => { setSortBy(val); setShowMobileFilters(false); }} 
                 options={[
                   { value: 'default', label: 'Sort by: Featured' },
                   { value: 'price-low', label: 'Price: Low to High' },
