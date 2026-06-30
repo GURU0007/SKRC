@@ -1,3 +1,4 @@
+// Sri Krishna Real Estate: Simplified Email-First Authentication Flow V2
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
