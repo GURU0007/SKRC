@@ -127,6 +127,7 @@ function App() {
       }
 
       if (isCallback) {
+        showToast('You have been logged in successfully.');
         // Since the user returned via an auth link/OAuth redirect, land them directly in the marketplace
         localStorage.setItem('sri_krishna_marketplace_sub_tab', 'browse');
         localStorage.setItem('sri_krishna_marketplace_my_listings', 'false');
