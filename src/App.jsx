@@ -167,6 +167,11 @@ function App() {
   // Redirect to marketplace automatically once user logs in from the login tab
   useEffect(() => {
     if (user && activeTab === 'login' && !recoveryMode) {
+      // Do not redirect to marketplace if user has not completed profile setup (no phone number)
+      if (!user.user_metadata?.phone) {
+        return;
+      }
+      
       localStorage.setItem('sri_krishna_marketplace_sub_tab', 'browse');
       localStorage.setItem('sri_krishna_marketplace_my_listings', 'false');
       localStorage.setItem('sri_krishna_marketplace_pending_only', 'false');
@@ -277,7 +282,7 @@ function App() {
         )}
 
         {/* Dedicated Login Tab */}
-        {activeTab === 'login' && (!user || recoveryMode) && (
+        {activeTab === 'login' && (!user || !user.user_metadata?.phone || recoveryMode) && (
           <Login user={user} setUser={setUser} recoveryMode={recoveryMode} setRecoveryMode={setRecoveryMode} />
         )}
 

@@ -27,6 +27,15 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     setShowPassword(false);
   }, [authStep, recoveryMode]);
 
+  useEffect(() => {
+    if (user) {
+      setAuthEmail(user.email || '');
+      if (!user.user_metadata?.phone) {
+        setAuthStep('register-profile');
+      }
+    }
+  }, [user]);
+
   const handleAuthError = (err) => {
     if (!err) return;
     let msg = err.message || String(err);
