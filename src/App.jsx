@@ -395,7 +395,7 @@ function App() {
       {logoutMessage && (
         <div style={{
           position: 'fixed',
-          bottom: '30px',
+          top: '90px',
           right: '30px',
           background: 'var(--bg-card)',
           border: '1px solid var(--accent-gold)',
