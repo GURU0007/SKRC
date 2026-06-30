@@ -516,6 +516,18 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                   {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                 </button>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                <input 
+                  type="checkbox" 
+                  id="recovery-show-pass"
+                  checked={showPassword} 
+                  onChange={(e) => setShowPassword(e.target.checked)} 
+                  style={{ cursor: 'pointer', width: '14px', height: '14px', margin: 0 }}
+                />
+                <label htmlFor="recovery-show-pass" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
+                  Show Password
+                </label>
+              </div>
             </div>
             {authError && (
               <p style={{ 
@@ -663,6 +675,18 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                       {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                     </button>
                   </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                    <input 
+                      type="checkbox" 
+                      id="login-show-pass"
+                      checked={showPassword} 
+                      onChange={(e) => setShowPassword(e.target.checked)} 
+                      style={{ cursor: 'pointer', width: '14px', height: '14px', margin: 0 }}
+                    />
+                    <label htmlFor="login-show-pass" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
+                      Show Password
+                    </label>
+                  </div>
                 </div>
               )}
 
@@ -700,6 +724,18 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                     >
                       {showPassword ? <EyeOffIcon /> : <EyeIcon />}
                     </button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                    <input 
+                      type="checkbox" 
+                      id="register-show-pass"
+                      checked={showPassword} 
+                      onChange={(e) => setShowPassword(e.target.checked)} 
+                      style={{ cursor: 'pointer', width: '14px', height: '14px', margin: 0 }}
+                    />
+                    <label htmlFor="register-show-pass" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
+                      Show Password
+                    </label>
                   </div>
                 </div>
               )}
