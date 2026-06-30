@@ -36,6 +36,18 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode, onLoginSuccess })
     }
   }, [user]);
 
+  useEffect(() => {
+    const handlePageShow = (event) => {
+      if (event.persisted) {
+        setAuthLoading(false);
+      }
+    };
+    window.addEventListener('pageshow', handlePageShow);
+    return () => {
+      window.removeEventListener('pageshow', handlePageShow);
+    };
+  }, []);
+
   const handleAuthError = (err) => {
     if (!err) return;
     let msg = err.message || String(err);
