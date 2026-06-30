@@ -10,7 +10,7 @@ const EyeOffIcon = () => (
 );
 
 function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
-  const [authStep, setAuthStep] = useState('email'); // 'email', 'password', 'otp', 'register'
+  const [authStep, setAuthStep] = useState('email'); // 'email', 'password', 'otp', 'register-profile'
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -20,6 +20,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
   const [authLoading, setAuthLoading] = useState(false);
   const [isExistingUser, setIsExistingUser] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [otpSentForRegister, setOtpSentForRegister] = useState(false);
 
   useEffect(() => {
     setShowPassword(false);
@@ -61,6 +62,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     setAuthLoading(true);
 
     let exists = false;
+    let rpcFailed = false;
 
     if (isSupabaseConfigured) {
       try {
@@ -68,25 +70,34 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
           user_email: authEmail
         });
         if (error) {
-          console.warn("RPC check_email_exists not found. Defaulting to registration flow.");
+          console.warn("RPC check_email_exists not found. Defaulting to registration flow with self-healing check.");
           exists = false;
+          rpcFailed = true;
         } else {
           exists = data;
         }
       } catch (err) {
         exists = false;
+        rpcFailed = true;
       }
     } else {
       exists = authEmail === 'testowner@gmail.com';
     }
 
     setIsExistingUser(exists);
-    setAuthLoading(false);
 
     if (exists) {
       setAuthStep('password');
+      setAuthLoading(false);
     } else {
-      setAuthStep('register');
+      // New user (or RPC missing): Send OTP to verify email first!
+      setOtpSentForRegister(true);
+      const success = await sendOtpForEmail(authEmail, true);
+      if (success) {
+        setAuthStep('otp');
+        setAuthError('We have sent a verification code to your email. Please verify ownership first.');
+      }
+      setAuthLoading(false);
     }
   };
 
@@ -145,8 +156,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     }
   };
 
-  // Step 2B: Register (New Users)
-  const handleRegister = async (e) => {
+  // Step 2B: Complete Profile (New Users after OTP Verification)
+  const handleCompleteProfile = async (e) => {
     e.preventDefault();
     if (!authPassword) return;
     if (authPassword !== confirmPassword) {
@@ -157,38 +168,22 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     setAuthLoading(true);
     try {
       if (isSupabaseConfigured) {
-        const { data, error } = await supabase.auth.signUp({
-          email: authEmail,
+        const { data, error } = await supabase.auth.updateUser({
           password: authPassword,
-          options: {
-            data: {
-              phone: authPhone,
-              name: authEmail.split('@')[0]
-            }
+          data: {
+            phone: authPhone,
+            name: authEmail.split('@')[0]
           }
         });
-        if (error) {
-          const errMsg = error.message || String(error);
-          if (errMsg.toLowerCase().includes('already registered') || errMsg.toLowerCase().includes('already exists') || errMsg.toLowerCase().includes('conflict')) {
-            setIsExistingUser(true);
-            setAuthStep('password');
-            setAuthError('This email is already registered. Please sign in with your password below.');
-            return;
-          }
-          throw error;
-        }
-        if (data?.session) {
-          setUser(data.session.user);
-          setAuthEmail('');
-          setAuthPassword('');
-          setAuthPhone('');
-          setConfirmPassword('');
-          setAuthStep('email');
-        } else {
-          setAuthError('Registration successful! Please check your email to confirm your account before signing in.');
-        }
+        if (error) throw error;
+        setUser(data?.user || null);
+        setAuthEmail('');
+        setAuthPassword('');
+        setConfirmPassword('');
+        setAuthPhone('');
+        setAuthStep('email');
       } else {
-        // Sandbox mock registration
+        // Sandbox mock registration complete
         setUser({
           id: 'mock-sandbox-user-id',
           email: authEmail,
@@ -199,8 +194,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         });
         setAuthEmail('');
         setAuthPassword('');
-        setAuthPhone('');
         setConfirmPassword('');
+        setAuthPhone('');
         setAuthStep('email');
       }
     } catch (err) {
@@ -210,7 +205,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     }
   };
 
-  // Step 2C: Verify OTP Code (OTP Login)
+  // Step 2C: Verify OTP Code (OTP Login or Email Verification)
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -239,25 +234,48 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         finalData = retry.data;
       }
 
-      setUser(finalData?.user || finalData?.session?.user || null);
-      setAuthEmail('');
-      setOtpCode('');
-      setAuthStep('email');
+      const activeUser = finalData?.user || finalData?.session?.user || null;
+      
+      if (activeUser) {
+        // Check if this user already has profile metadata (phone number)
+        const hasPhone = activeUser.user_metadata?.phone;
+        
+        if (hasPhone) {
+          // User already has profile setup (existing user). Directly sign in!
+          setUser(activeUser);
+          setAuthEmail('');
+          setOtpCode('');
+          setAuthStep('email');
+        } else {
+          // New user (needs to complete profile). Take to Complete Profile screen!
+          setAuthStep('register-profile');
+          setAuthError('Email verified successfully! Please complete your profile.');
+        }
+      } else {
+        setAuthError('Failed to verify OTP code.');
+      }
     } else {
       // Sandbox mock OTP verify
       setTimeout(() => {
         if (otpCode === '123456') {
-          setUser({
-            id: 'mock-sandbox-user-id',
-            email: authEmail,
-            user_metadata: {
-              name: authEmail.split('@')[0],
-              phone: '+91 8985961113'
-            }
-          });
-          setAuthEmail('');
-          setOtpCode('');
-          setAuthStep('email');
+          if (authEmail === 'testowner@gmail.com') {
+            // Mock existing user
+            setUser({
+              id: 'mock-sandbox-user-id',
+              email: authEmail,
+              user_metadata: {
+                name: authEmail.split('@')[0],
+                phone: '+91 8985961113'
+              }
+            });
+            setAuthEmail('');
+            setOtpCode('');
+            setAuthStep('email');
+          } else {
+            // Mock new user
+            setAuthStep('register-profile');
+            setAuthError('Email verified successfully! Please complete your profile.');
+          }
         } else {
           setAuthError('Invalid code. Use 123456 for sandbox testing.');
         }
@@ -275,6 +293,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     const success = await sendOtpForEmail(authEmail, false);
     if (success) {
       setAuthStep('otp');
+      setOtpSentForRegister(false);
       setAuthError('We have sent a verification code to your email.');
     }
     setAuthLoading(false);
@@ -283,9 +302,9 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
   const handleResendOtp = async () => {
     setAuthError('');
     setAuthLoading(true);
-    const success = await sendOtpForEmail(authEmail, false);
+    const success = await sendOtpForEmail(authEmail, true);
     if (success) {
-      setAuthError('We have sent a verification code to your email.');
+      setAuthError('We have sent a new verification code to your email.');
     }
     setAuthLoading(false);
   };
@@ -374,8 +393,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     if (recoveryMode) return 'Set New Password';
     if (authStep === 'email') return 'Sign In / Register';
     if (authStep === 'password') return 'Enter Password';
-    if (authStep === 'register') return 'Register Account';
-    if (authStep === 'otp') return 'Enter Verification Code';
+    if (authStep === 'register-profile') return 'Complete Your Profile';
+    if (authStep === 'otp') return otpSentForRegister ? 'Verify Your Email' : 'Enter Verification Code';
     return 'Sign In';
   };
 
@@ -513,8 +532,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                   ? handleCheckEmail 
                   : authStep === 'password' 
                     ? handleVerifyPassword 
-                    : authStep === 'register'
-                      ? handleRegister
+                    : authStep === 'register-profile'
+                      ? handleCompleteProfile
                       : handleVerifyOtp
               } 
               style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
@@ -592,8 +611,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                 </div>
               )}
 
-              {/* Register fields (New Users) */}
-              {authStep === 'register' && (
+              {/* Complete Profile fields (New Users / Register Step) */}
+              {authStep === 'register-profile' && (
                 <>
                   <div className="form-group">
                     <label>Phone Number</label>
@@ -669,7 +688,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
               {/* OTP Code field (Existing/OTP Users) */}
               {authStep === 'otp' && (
                 <div className="form-group">
-                  <label>6-Digit Verification Code</label>
+                  <label>{otpSentForRegister ? 'Email Verification Code' : '6-Digit Verification Code'}</label>
                   <input 
                     type="text" 
                     className="form-input" 
@@ -724,8 +743,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                     ? 'Continue' 
                     : authStep === 'password' 
                       ? 'Sign In' 
-                      : authStep === 'register'
-                        ? 'Register & Create Account'
+                      : authStep === 'register-profile'
+                        ? 'Complete Profile'
                         : 'Verify & Sign In'
                 )}
               </button>
@@ -747,7 +766,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                   </div>
                 )}
 
-                {authStep === 'otp' && (
+                {authStep === 'otp' && !otpSentForRegister && (
                   <div style={{ marginTop: '10px', marginBottom: '15px' }}>
                     <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
                       Or Sign In using{' '}
@@ -776,6 +795,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                         setConfirmPassword('');
                         setAuthPhone('');
                         setAuthError(''); 
+                        setOtpSentForRegister(false);
                       }} 
                       style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
                     >
