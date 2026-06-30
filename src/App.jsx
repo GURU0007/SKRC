@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { supabase } from './supabaseClient';
 
@@ -53,6 +53,18 @@ function App() {
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = (message) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+    setToastMessage(message);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage('');
+      toastTimeoutRef.current = null;
+    }, 2500);
+  };
 
   // Sync activeTab changes to URL search parameters & browser history stack
   useEffect(() => {
@@ -102,12 +114,9 @@ function App() {
         if (!processedCodes.includes(code)) {
           try {
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-            if (!error && data?.session) {
+             if (!error && data?.session) {
               setUser(data.session.user);
-              setToastMessage('Signed in successfully with Google.');
-              setTimeout(() => {
-                setToastMessage('');
-              }, 5000);
+              showToast('Signed in successfully with Google.');
             }
             processedCodes.push(code);
             sessionStorage.setItem('sri_krishna_processed_codes', JSON.stringify(processedCodes));
@@ -153,6 +162,9 @@ function App() {
     return () => {
       window.removeEventListener('popstate', handlePopState);
       subscription.unsubscribe();
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -167,10 +179,7 @@ function App() {
       window.localStorage.removeItem('sri-krishna-real-estate-auth');
     }
     setUser(null);
-    setToastMessage('You have been logged out successfully.');
-    setTimeout(() => {
-      setToastMessage('');
-    }, 5000);
+    showToast('You have been logged out successfully.');
   };
 
   // Redirect to marketplace automatically once user logs in from the login tab
@@ -298,10 +307,7 @@ function App() {
             recoveryMode={recoveryMode} 
             setRecoveryMode={setRecoveryMode} 
             onLoginSuccess={(msg) => {
-              setToastMessage(msg);
-              setTimeout(() => {
-                setToastMessage('');
-              }, 5000);
+              showToast(msg);
             }}
           />
         )}
