@@ -52,7 +52,7 @@ function App() {
   });
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [logoutMessage, setLogoutMessage] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
 
   // Sync activeTab changes to URL search parameters & browser history stack
   useEffect(() => {
@@ -104,6 +104,10 @@ function App() {
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
             if (!error && data?.session) {
               setUser(data.session.user);
+              setToastMessage('Signed in successfully with Google.');
+              setTimeout(() => {
+                setToastMessage('');
+              }, 5000);
             }
             processedCodes.push(code);
             sessionStorage.setItem('sri_krishna_processed_codes', JSON.stringify(processedCodes));
@@ -163,9 +167,9 @@ function App() {
       window.localStorage.removeItem('sri-krishna-real-estate-auth');
     }
     setUser(null);
-    setLogoutMessage('You have been logged out successfully.');
+    setToastMessage('You have been logged out successfully.');
     setTimeout(() => {
-      setLogoutMessage('');
+      setToastMessage('');
     }, 5000);
   };
 
@@ -288,7 +292,18 @@ function App() {
 
         {/* Dedicated Login Tab */}
         {activeTab === 'login' && (!user || !user.user_metadata?.phone || recoveryMode) && (
-          <Login user={user} setUser={setUser} recoveryMode={recoveryMode} setRecoveryMode={setRecoveryMode} />
+          <Login 
+            user={user} 
+            setUser={setUser} 
+            recoveryMode={recoveryMode} 
+            setRecoveryMode={setRecoveryMode} 
+            onLoginSuccess={(msg) => {
+              setToastMessage(msg);
+              setTimeout(() => {
+                setToastMessage('');
+              }, 5000);
+            }}
+          />
         )}
 
         {/* Tab 5: Contact Booking Request */}
@@ -392,7 +407,7 @@ function App() {
       </div>
       
       {/* Floating Logout Toast Notification */}
-      {logoutMessage && (
+      {toastMessage && (
         <div style={{
           position: 'fixed',
           top: '90px',
@@ -410,7 +425,7 @@ function App() {
           animation: 'fadeIn 0.3s ease'
         }}>
           <span style={{ color: 'var(--accent-gold)', fontSize: '1.2rem', fontWeight: 'bold' }}>✓</span>
-          <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{logoutMessage}</span>
+          <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{toastMessage}</span>
         </div>
       )}
     </div>
