@@ -52,6 +52,7 @@ function App() {
   });
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
+  const [logoutMessage, setLogoutMessage] = useState('');
 
   // Sync activeTab changes to URL search parameters & browser history stack
   useEffect(() => {
@@ -162,6 +163,10 @@ function App() {
       window.localStorage.removeItem('sri-krishna-real-estate-auth');
     }
     setUser(null);
+    setLogoutMessage('You have been logged out successfully.');
+    setTimeout(() => {
+      setLogoutMessage('');
+    }, 5000);
   };
 
   // Redirect to marketplace automatically once user logs in from the login tab
@@ -385,6 +390,29 @@ function App() {
           </div>
         </div>
       </div>
+      
+      {/* Floating Logout Toast Notification */}
+      {logoutMessage && (
+        <div style={{
+          position: 'fixed',
+          bottom: '30px',
+          right: '30px',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--accent-gold)',
+          borderRadius: '8px',
+          padding: '12px 20px',
+          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
+          color: '#fff',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          animation: 'fadeIn 0.3s ease'
+        }}>
+          <span style={{ color: 'var(--accent-gold)', fontSize: '1.2rem', fontWeight: 'bold' }}>✓</span>
+          <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{logoutMessage}</span>
+        </div>
+      )}
     </div>
   );
 }
