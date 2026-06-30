@@ -116,7 +116,7 @@ function App() {
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
              if (!error && data?.session) {
               setUser(data.session.user);
-              showToast('Signed in successfully with Google.');
+              showToast('You have been logged in successfully.');
             }
             processedCodes.push(code);
             sessionStorage.setItem('sri_krishna_processed_codes', JSON.stringify(processedCodes));

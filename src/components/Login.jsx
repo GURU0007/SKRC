@@ -132,7 +132,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode, onLoginSuccess })
           }
         } else {
           setUser(data?.user || data?.session?.user || null);
-          if (onLoginSuccess) onLoginSuccess('Logged in successfully.');
+          if (onLoginSuccess) onLoginSuccess('You have been logged in successfully.');
           setAuthEmail('');
           setAuthPassword('');
           setAuthStep('email');
@@ -187,7 +187,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode, onLoginSuccess })
         });
         if (error) throw error;
         setUser(data?.user || null);
-        if (onLoginSuccess) onLoginSuccess('Account registered and logged in successfully.');
+        if (onLoginSuccess) onLoginSuccess('You have been logged in successfully.');
         setAuthEmail('');
         setAuthPassword('');
         setConfirmPassword('');
@@ -254,7 +254,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode, onLoginSuccess })
         if (hasPhone) {
           // User already has profile setup (existing user). Directly sign in!
           setUser(activeUser);
-          if (onLoginSuccess) onLoginSuccess('Logged in successfully.');
+          if (onLoginSuccess) onLoginSuccess('You have been logged in successfully.');
           setAuthEmail('');
           setOtpCode('');
           setAuthStep('email');
