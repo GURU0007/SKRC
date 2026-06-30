@@ -1,54 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
-// Helper: get auth preference from localStorage cache
-const getCachedAuthPref = (email) => {
-  try {
-    const prefs = JSON.parse(localStorage.getItem('auth_method_prefs') || '{}');
-    return prefs[email.toLowerCase()] || null;
-  } catch { return null; }
-};
-
-// Helper: set auth preference in localStorage cache
-const setCachedAuthPref = (email, method) => {
-  try {
-    const prefs = JSON.parse(localStorage.getItem('auth_method_prefs') || '{}');
-    prefs[email.toLowerCase()] = method;
-    localStorage.setItem('auth_method_prefs', JSON.stringify(prefs));
-  } catch {}
-};
-
-// Fetch auth preference from database (source of truth)
-const getDbAuthPref = async (email) => {
-  if (!isSupabaseConfigured) return null;
-  try {
-    const { data, error } = await supabase.rpc('get_auth_preference', {
-      useremail: email
-    });
-    if (error || !data) return null;
-    // Cache it locally for next time
-    setCachedAuthPref(email, data);
-    return data; // 'otp' | 'password'
-  } catch { return null; }
-};
-
-// Save auth preference to both DB and localStorage
-const saveAuthPreference = async (email, method) => {
-  // Always update local cache immediately
-  setCachedAuthPref(email, method);
-  // Write to database (fire-and-forget, non-blocking)
-  if (isSupabaseConfigured) {
-    try {
-      await supabase.rpc('set_auth_preference', {
-        useremail: email,
-        method: method
-      });
-    } catch (err) {
-      console.warn('Failed to save auth preference to DB:', err);
-    }
-  }
-};
-
 const EyeIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
 );
@@ -58,14 +10,15 @@ const EyeOffIcon = () => (
 );
 
 function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
-  const [authStep, setAuthStep] = useState('email'); // 'email', 'password', 'otp'
+  const [authStep, setAuthStep] = useState('email'); // 'email', 'password', 'otp', 'register'
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [authPhone, setAuthPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [authError, setAuthError] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
   const [isExistingUser, setIsExistingUser] = useState(false);
-  const [pendingPassword, setPendingPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -76,12 +29,11 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     if (!err) return;
     let msg = err.message || String(err);
     if (msg === '{}' || msg === '[object Object]') {
-      msg = 'Error sending verification code. Please check your Supabase Auth settings and make sure your Gmail SMTP password is correct.';
+      msg = 'Error sending verification code. Please check your settings.';
     }
     setAuthError(msg);
   };
 
-  // Helper to send OTP for a given email (used by auto-route and manual switch)
   const sendOtpForEmail = async (email, createUser = false) => {
     if (isSupabaseConfigured) {
       const { error } = await supabase.auth.signInWithOtp({
@@ -92,23 +44,8 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         }
       });
       if (error) {
-        // Retry with shouldCreateUser: true if signup is needed
-        if (error.message && (error.message.includes('Signups not allowed') || error.message.includes('signup') || error.message.includes('not allowed'))) {
-          const retry = await supabase.auth.signInWithOtp({
-            email,
-            options: {
-              shouldCreateUser: true,
-              emailRedirectTo: window.location.origin
-            }
-          });
-          if (retry.error) {
-            handleAuthError(retry.error);
-            return false;
-          }
-        } else {
-          handleAuthError(error);
-          return false;
-        }
+        handleAuthError(error);
+        return false;
       }
     } else {
       setAuthError('Sandbox Mode: Use code 123456 to verify.');
@@ -116,9 +53,10 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     return true;
   };
 
-  // Step 1: Check if Email exists and route based on saved preference
+  // Step 1: Check if Email exists
   const handleCheckEmail = async (e) => {
     e.preventDefault();
+    if (!authEmail) return;
     setAuthError('');
     setAuthLoading(true);
 
@@ -129,7 +67,6 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         const { data, error } = await supabase.rpc('check_email_exists', {
           user_email: authEmail
         });
-        
         if (error) {
           console.warn("RPC check_email_exists not found. Defaulting to existing user flow.");
           exists = true;
@@ -144,32 +81,12 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     }
 
     setIsExistingUser(exists);
+    setAuthLoading(false);
 
-    // Check auth preference: localStorage first (fast), then DB (source of truth)
-    let savedPref = getCachedAuthPref(authEmail);
-    if (!savedPref) {
-      savedPref = await getDbAuthPref(authEmail);
-    }
-
-    if (savedPref === 'otp') {
-      // User previously chose OTP — auto-send OTP and go straight to OTP step
-      const success = await sendOtpForEmail(authEmail, !exists);
-      if (success) {
-        setAuthStep('otp');
-      }
-      setAuthLoading(false);
-    } else if (savedPref === 'password' && exists) {
-      // User previously chose password and account exists — go straight to password
+    if (exists) {
       setAuthStep('password');
-      setAuthLoading(false);
-    } else if (exists) {
-      // Existing user, no preference saved — show password (default for existing users)
-      setAuthStep('password');
-      setAuthLoading(false);
     } else {
-      // New user, no preference — show registration password screen
-      setAuthStep('register-password');
-      setAuthLoading(false);
+      setAuthStep('register');
     }
   };
 
@@ -181,31 +98,6 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
 
     try {
       if (isSupabaseConfigured) {
-        // Check if user has a password set
-        let hasPassword = true;
-        try {
-          const { data, error } = await supabase.rpc('has_password_set', {
-            user_email: authEmail
-          });
-          if (!error && data !== null) {
-            hasPassword = data;
-          }
-        } catch (err) {
-          console.warn("Error calling has_password_set:", err);
-        }
-
-        if (!hasPassword) {
-          // No password set yet (e.g. user registered via Google OAuth or OTP)
-          setPendingPassword(authPassword);
-          const success = await sendOtpForEmail(authEmail, false);
-          if (success) {
-            setAuthStep('otp');
-            setAuthError('We have sent a verification code to your email.');
-          }
-          setAuthLoading(false);
-          return;
-        }
-
         const { data, error } = await supabase.auth.signInWithPassword({
           email: authEmail,
           password: authPassword
@@ -213,14 +105,12 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
 
         if (error) {
           const errMsg = error.message || String(error);
-          if (errMsg && typeof errMsg === 'string' && errMsg.toLowerCase().includes('invalid')) {
-            setAuthError('Incorrect password. If you signed up using a Verification Code (OTP) or do not have a password set, please log in using OTP by clicking the link below. Once logged in, you can set a password using the \'Set Password\' button in the header.');
+          if (errMsg && errMsg.toLowerCase().includes('invalid')) {
+            setAuthError('Incorrect password. If you do not have a password set, please log in using OTP below.');
           } else {
             handleAuthError(error);
           }
         } else {
-          // Save preference: this user prefers password login
-          saveAuthPreference(authEmail, 'password');
           setUser(data?.user || data?.session?.user || null);
           setAuthEmail('');
           setAuthPassword('');
@@ -230,7 +120,6 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         // Sandbox mock password verify
         setTimeout(() => {
           if (authPassword === 'password') {
-            saveAuthPreference(authEmail, 'password');
             setUser({
               id: 'mock-sandbox-user-id',
               email: authEmail,
@@ -243,26 +132,76 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
             setAuthPassword('');
             setAuthStep('email');
           } else {
-            setAuthError('Incorrect password. If you signed up using a Verification Code (OTP) or do not have a password set, please log in using OTP by clicking the link below. Once logged in, you can set a password using the \'Set Password\' button in the header.');
+            setAuthError('Incorrect password. Use "password" for sandbox testing.');
           }
           setAuthLoading(false);
         }, 800);
         return;
       }
     } catch (err) {
-      console.error("Error in handleVerifyPassword:", err);
-      const errMsg = err.message || String(err);
-      if (errMsg && typeof errMsg === 'string' && errMsg.toLowerCase().includes('invalid')) {
-        setAuthError('Incorrect password. If you signed up using a Verification Code (OTP) or do not have a password set, please log in using OTP by clicking the link below. Once logged in, you can set a password using the \'Set Password\' button in the header.');
-      } else {
-        setAuthError(errMsg);
-      }
+      setAuthError(err.message || String(err));
     } finally {
       setAuthLoading(false);
     }
   };
 
-  // Step 2B: Verify OTP Code (New Users or Existing Users selecting OTP)
+  // Step 2B: Register (New Users)
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    if (!authPassword) return;
+    if (authPassword !== confirmPassword) {
+      setAuthError('Passwords do not match.');
+      return;
+    }
+    setAuthError('');
+    setAuthLoading(true);
+    try {
+      if (isSupabaseConfigured) {
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail,
+          password: authPassword,
+          options: {
+            data: {
+              phone: authPhone,
+              name: authEmail.split('@')[0]
+            }
+          }
+        });
+        if (error) throw error;
+        if (data?.session) {
+          setUser(data.session.user);
+          setAuthEmail('');
+          setAuthPassword('');
+          setAuthPhone('');
+          setConfirmPassword('');
+          setAuthStep('email');
+        } else {
+          setAuthError('Registration successful! Please check your email to confirm your account before signing in.');
+        }
+      } else {
+        // Sandbox mock registration
+        setUser({
+          id: 'mock-sandbox-user-id',
+          email: authEmail,
+          user_metadata: {
+            name: authEmail.split('@')[0],
+            phone: authPhone
+          }
+        });
+        setAuthEmail('');
+        setAuthPassword('');
+        setAuthPhone('');
+        setConfirmPassword('');
+        setAuthStep('email');
+      }
+    } catch (err) {
+      setAuthError(err.message || String(err));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // Step 2C: Verify OTP Code (OTP Login)
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
     setAuthError('');
@@ -278,7 +217,6 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
       let finalData = data;
 
       if (error) {
-        // Fallback to signup type
         const retry = await supabase.auth.verifyOtp({
           email: authEmail,
           token: otpCode,
@@ -292,21 +230,6 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
         finalData = retry.data;
       }
 
-      // If we have a pending password from the check, update their password now!
-      if (pendingPassword) {
-        try {
-          await supabase.auth.updateUser({ password: pendingPassword });
-          // Save preference: password (since they now successfully set a password)
-          await saveAuthPreference(authEmail, 'password');
-        } catch (passErr) {
-          console.warn("Failed to set user password after OTP:", passErr);
-        }
-        setPendingPassword('');
-      } else {
-        // Save preference: this user prefers OTP login
-        saveAuthPreference(authEmail, 'otp');
-      }
-
       setUser(finalData?.user || finalData?.session?.user || null);
       setAuthEmail('');
       setOtpCode('');
@@ -315,12 +238,6 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
       // Sandbox mock OTP verify
       setTimeout(() => {
         if (otpCode === '123456') {
-          if (pendingPassword) {
-            saveAuthPreference(authEmail, 'password');
-            setPendingPassword('');
-          } else {
-            saveAuthPreference(authEmail, 'otp');
-          }
           setUser({
             id: 'mock-sandbox-user-id',
             email: authEmail,
@@ -342,13 +259,14 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     setAuthLoading(false);
   };
 
-  // Trigger OTP for Existing User (when they click "Switch to OTP")
+  // Send OTP trigger
   const handleSendOtpForExisting = async () => {
     setAuthError('');
     setAuthLoading(true);
-    const success = await sendOtpForEmail(authEmail, !isExistingUser);
+    const success = await sendOtpForEmail(authEmail, false);
     if (success) {
       setAuthStep('otp');
+      setAuthError('We have sent a verification code to your email.');
     }
     setAuthLoading(false);
   };
@@ -356,11 +274,32 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
   const handleResendOtp = async () => {
     setAuthError('');
     setAuthLoading(true);
-    const success = await sendOtpForEmail(authEmail, !isExistingUser);
+    const success = await sendOtpForEmail(authEmail, false);
     if (success) {
       setAuthError('We have sent a verification code to your email.');
     }
     setAuthLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!authEmail) return;
+    setAuthError('');
+    setAuthLoading(true);
+    try {
+      if (isSupabaseConfigured) {
+        const { error } = await supabase.auth.resetPasswordForEmail(authEmail, {
+          redirectTo: `${window.location.origin}?type=recovery`
+        });
+        if (error) throw error;
+        setAuthError('Password reset link sent to your email successfully!');
+      } else {
+        setAuthError('Sandbox Mode: Password reset link sent to your email.');
+      }
+    } catch (err) {
+      setAuthError(err.message || String(err));
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const handleGoogleSignIn = async () => {
@@ -422,54 +361,11 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
     }
   };
 
-  const handleRegisterWithPassword = async (e) => {
-    e.preventDefault();
-    if (!authPassword) return;
-    setAuthError('');
-    setAuthLoading(true);
-    try {
-      if (isSupabaseConfigured) {
-        const { data, error } = await supabase.auth.signUp({
-          email: authEmail,
-          password: authPassword
-        });
-        if (error) throw error;
-        if (data?.session) {
-          saveAuthPreference(authEmail, 'password');
-          setUser(data.session.user);
-          setAuthEmail('');
-          setAuthPassword('');
-          setAuthStep('email');
-        } else {
-          setAuthError('Registration successful! Please check your email to confirm your account before signing in.');
-        }
-      } else {
-        // Sandbox mock registration
-        saveAuthPreference(authEmail, 'password');
-        setUser({
-          id: 'mock-sandbox-user-id',
-          email: authEmail,
-          user_metadata: {
-            name: authEmail.split('@')[0],
-            phone: '+91 8985961113'
-          }
-        });
-        setAuthEmail('');
-        setAuthPassword('');
-        setAuthStep('email');
-      }
-    } catch (err) {
-      setAuthError(err.message || String(err));
-    } finally {
-      setAuthLoading(false);
-    }
-  };
-
   const getPanelTitle = () => {
     if (recoveryMode) return 'Set New Password';
     if (authStep === 'email') return 'Sign In / Register';
     if (authStep === 'password') return 'Enter Password';
-    if (authStep === 'register-password') return 'Create Account Password';
+    if (authStep === 'register') return 'Register Account';
     if (authStep === 'otp') return 'Enter Verification Code';
     return 'Sign In';
   };
@@ -558,22 +454,11 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                 'Save New Password'
               )}
             </button>
-            {user && (
-              <p style={{ textAlign: 'center', marginTop: '10px', fontSize: '0.8rem' }}>
-                <span 
-                  onClick={() => { if (setRecoveryMode) setRecoveryMode(false); setAuthError(''); }}
-                  style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
-                >
-                  Cancel and Go Back
-                </span>
-              </p>
-            )}
           </form>
         ) : (
           <>
             {authStep === 'email' && (
               <>
-                {/* Google OAuth */}
                 <button 
                   type="button"
                   onClick={handleGoogleSignIn}
@@ -619,14 +504,14 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                   ? handleCheckEmail 
                   : authStep === 'password' 
                     ? handleVerifyPassword 
-                    : authStep === 'register-password'
-                      ? handleRegisterWithPassword
+                    : authStep === 'register'
+                      ? handleRegister
                       : handleVerifyOtp
               } 
               style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
             >
               
-              {/* Email field (Editable in step 1, read-only/disabled in others) */}
+              {/* Email field (Read-only on sub-steps) */}
               <div className="form-group">
                 <label>Email Address</label>
                 <input 
@@ -640,11 +525,19 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                 />
               </div>
 
-              {/* Password field (Step 2 - Existing Users) */}
+              {/* Password field (Existing Users) */}
               {authStep === 'password' && (
                 <div className="form-group">
-                  <label>Password</label>
-                  <div style={{ position: 'relative' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ margin: 0 }}>Password</label>
+                    <span 
+                      onClick={handleForgotPassword}
+                      style={{ color: 'var(--accent-gold)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Forgot Password?
+                    </span>
+                  </div>
+                  <div style={{ position: 'relative', marginTop: '6px' }}>
                     <input 
                       type={showPassword ? 'text' : 'password'} 
                       className="form-input" 
@@ -690,57 +583,81 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                 </div>
               )}
 
-              {/* Password field (Step 2 - New Users) */}
-              {authStep === 'register-password' && (
-                <div className="form-group">
-                  <label>Create Password</label>
-                  <div style={{ position: 'relative' }}>
+              {/* Register fields (New Users) */}
+              {authStep === 'register' && (
+                <>
+                  <div className="form-group">
+                    <label>Phone Number</label>
+                    <input 
+                      type="tel" 
+                      className="form-input" 
+                      placeholder="Enter phone number (e.g. +91 9999999999)" 
+                      value={authPhone}
+                      onChange={(e) => setAuthPhone(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Create Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type={showPassword ? 'text' : 'password'} 
+                        className="form-input" 
+                        placeholder="Choose a password" 
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        style={{ paddingRight: '45px', width: '100%' }}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          padding: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Confirm Password</label>
                     <input 
                       type={showPassword ? 'text' : 'password'} 
                       className="form-input" 
-                      placeholder="Choose a password for registration" 
-                      value={authPassword}
-                      onChange={(e) => setAuthPassword(e.target.value)}
-                      style={{ paddingRight: '45px', width: '100%' }}
+                      placeholder="Confirm your password" 
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
                       required
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      style={{
-                        position: 'absolute',
-                        right: '12px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--text-secondary)',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                      <input 
+                        type="checkbox" 
+                        id="register-show-pass"
+                        checked={showPassword} 
+                        onChange={(e) => setShowPassword(e.target.checked)} 
+                        style={{ cursor: 'pointer', width: '14px', height: '14px', margin: 0 }}
+                      />
+                      <label htmlFor="register-show-pass" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
+                        Show Password
+                      </label>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
-                    <input 
-                      type="checkbox" 
-                      id="register-show-pass"
-                      checked={showPassword} 
-                      onChange={(e) => setShowPassword(e.target.checked)} 
-                      style={{ cursor: 'pointer', width: '14px', height: '14px', margin: 0 }}
-                    />
-                    <label htmlFor="register-show-pass" style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', cursor: 'pointer', margin: 0, userSelect: 'none' }}>
-                      Show Password
-                    </label>
-                  </div>
-                </div>
+                </>
               )}
 
-              {/* Verification Code field (Step 2 - New/Existing Users with OTP selected) */}
+              {/* OTP Code field (Existing/OTP Users) */}
               {authStep === 'otp' && (
                 <div className="form-group">
                   <label>6-Digit Verification Code</label>
@@ -798,16 +715,16 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                     ? 'Continue' 
                     : authStep === 'password' 
                       ? 'Sign In' 
-                      : authStep === 'register-password'
+                      : authStep === 'register'
                         ? 'Register & Create Account'
                         : 'Verify & Sign In'
                 )}
               </button>
 
-              {/* Bottom navigation links to switch steps */}
+              {/* Bottom links to toggle flows */}
               <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '0.8rem' }}>
                 
-                {authStep === 'password' && !getCachedAuthPref(authEmail) && (
+                {authStep === 'password' && (
                   <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
                       Or Sign In using{' '}
@@ -821,21 +738,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                   </div>
                 )}
 
-                {authStep === 'register-password' && (
-                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
-                      Or Register using{' '}
-                      <span 
-                        onClick={handleSendOtpForExisting} 
-                        style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
-                      >
-                        Verification Code (OTP)
-                      </span>
-                    </p>
-                  </div>
-                )}
-
-                {authStep === 'otp' && isExistingUser && (
+                {authStep === 'otp' && (
                   <div style={{ marginTop: '10px', marginBottom: '15px' }}>
                     <p style={{ color: 'var(--text-secondary)', margin: 0 }}>
                       Or Sign In using{' '}
@@ -854,13 +757,15 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                 )}
 
                 {authStep !== 'email' && (
-                  <p style={{ color: 'var(--text-secondary)', marginTop: (authStep === 'password' || authStep === 'register-password' || authStep === 'otp') ? '15px' : '0px' }}>
+                  <p style={{ color: 'var(--text-secondary)', marginTop: '15px' }}>
                     Want to change email?{' '}
                     <span 
                       onClick={() => { 
                         setAuthStep('email'); 
                         setOtpCode(''); 
                         setAuthPassword(''); 
+                        setConfirmPassword('');
+                        setAuthPhone('');
                         setAuthError(''); 
                       }} 
                       style={{ color: 'var(--accent-gold)', cursor: 'pointer', textDecoration: 'underline' }}
