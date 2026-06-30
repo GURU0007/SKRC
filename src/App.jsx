@@ -54,6 +54,7 @@ function App() {
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const toastTimeoutRef = useRef(null);
+  const sessionInitialized = useRef(false);
 
   const showToast = (message) => {
     if (toastTimeoutRef.current) {
@@ -150,10 +151,29 @@ function App() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      sessionInitialized.current = true;
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      
+      if (event === 'SIGNED_IN') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const isCallback = code || window.location.hash.includes('access_token');
+        
+        if (!sessionInitialized.current) {
+          sessionInitialized.current = true;
+          if (isCallback) {
+            showToast('You have been logged in successfully.');
+          }
+        } else {
+          showToast('You have been logged in successfully.');
+        }
+      } else if (event === 'SIGNED_OUT') {
+        sessionInitialized.current = true;
+      }
+
       if (event === 'PASSWORD_RECOVERY') {
         setRecoveryMode(true);
         setActiveTab('login');
