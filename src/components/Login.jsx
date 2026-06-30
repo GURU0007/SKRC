@@ -68,13 +68,13 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
           user_email: authEmail
         });
         if (error) {
-          console.warn("RPC check_email_exists not found. Defaulting to existing user flow.");
-          exists = true;
+          console.warn("RPC check_email_exists not found. Defaulting to registration flow.");
+          exists = false;
         } else {
           exists = data;
         }
       } catch (err) {
-        exists = true;
+        exists = false;
       }
     } else {
       exists = authEmail === 'testowner@gmail.com';
@@ -167,7 +167,16 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
             }
           }
         });
-        if (error) throw error;
+        if (error) {
+          const errMsg = error.message || String(error);
+          if (errMsg.toLowerCase().includes('already registered') || errMsg.toLowerCase().includes('already exists') || errMsg.toLowerCase().includes('conflict')) {
+            setIsExistingUser(true);
+            setAuthStep('password');
+            setAuthError('This email is already registered. Please sign in with your password below.');
+            return;
+          }
+          throw error;
+        }
         if (data?.session) {
           setUser(data.session.user);
           setAuthEmail('');
