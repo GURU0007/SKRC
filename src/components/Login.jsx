@@ -70,16 +70,15 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
           user_email: authEmail
         });
         if (error) {
-          console.warn("RPC check_email_exists not found. Defaulting to registration flow with self-healing check.");
-          exists = false;
-          rpcFailed = true;
+          console.warn("RPC check_email_exists not found. Defaulting to password screen to prevent OTP spam.");
+          exists = true;
         } else {
           exists = data;
         }
       } catch (err) {
-        exists = false;
-        rpcFailed = true;
+        exists = true;
       }
+      rpcFailed = true;
     } else {
       exists = authEmail === 'testowner@gmail.com';
     }
