@@ -156,6 +156,24 @@ const DEFAULT_PROPERTIES = [
     tag: 'Investment Pick',
     date: '2026-06-23',
     user_id: 'default'
+  },
+  {
+    id: 'prop-10',
+    propertyCode: 1010,
+    title: 'Premium 2 BHK Fully Furnished Flat (Rent)',
+    type: 'apartment',
+    price: 12500,
+    size: '1200 Sq. Ft.',
+    facing: 'North',
+    location: 'Sampath Nagar, Kurnool',
+    description: 'Beautiful level fully furnished 2 BHK apartment in prime residential block. Includes modular kitchen, luxury sofas, wardrobes, and dynamic smart home automation controllers.',
+    contactName: 'K. Rajesh Reddy',
+    contactPhone: '+91 9848022338',
+    image: '/logo.jpeg',
+    tag: 'For Rent',
+    date: '2026-06-30',
+    user_id: 'default',
+    is_rental: true
   }
 ];
 
@@ -456,7 +474,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
             contact_phone: finalContactPhone,
             image_url: serializedImages,
             is_rental: editIsRental,
-            tag: editIsRental ? 'Rental' : 'Owner Listed'
+            tag: editIsRental ? 'For Rent' : 'For Sale'
           })
           .eq('id', selectedProp.id);
 
@@ -475,7 +493,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           contactPhone: finalContactPhone,
           image: serializedImages,
           is_rental: editIsRental,
-          tag: editIsRental ? 'Rental' : 'Owner Listed'
+          tag: editIsRental ? 'For Rent' : 'For Sale'
         };
         setSelectedProp(updatedProp);
         setIsEditing(false);
@@ -506,7 +524,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           contactName: editContactName,
           contactPhone: editContactPhone,
           is_rental: editIsRental,
-          tag: editIsRental ? 'Rental' : 'Owner Listed'
+          tag: editIsRental ? 'For Rent' : 'For Sale'
         };
 
         // Replace existing edit or add new
@@ -517,7 +535,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
         const updatedProp = {
           ...selectedProp,
           ...newEdit,
-          tag: editIsRental ? 'Rental' : 'Owner Listed'
+          tag: editIsRental ? 'For Rent' : 'For Sale'
         };
         setSelectedProp(updatedProp);
         setIsEditing(false);
@@ -543,7 +561,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                   contactPhone: finalContactPhone,
                   image: serializedImages,
                   is_rental: editIsRental,
-                  tag: editIsRental ? 'Rental' : 'Local Listing'
+                  tag: editIsRental ? 'For Rent' : 'For Sale'
                 };
               }
               return p;
@@ -563,7 +581,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
               contactPhone: finalContactPhone,
               image: serializedImages,
               is_rental: editIsRental,
-              tag: editIsRental ? 'Rental' : 'Local Listing'
+              tag: editIsRental ? 'For Rent' : 'For Sale'
             };
             setSelectedProp(updatedProp);
             setIsEditing(false);
@@ -649,7 +667,9 @@ function Marketplace({ user, setUser, setActiveTab }) {
           image: item.image_url || '/logo.jpeg',
           contactName: item.contact_name,
           contactPhone: item.contact_phone,
-          tag: item.tag || 'Owner Listed',
+          tag: item.tag === 'Owner Listed' || item.tag === 'Rental' || !item.tag
+            ? (item.is_rental ? 'For Rent' : 'For Sale')
+            : item.tag,
           date: item.created_at.split('T')[0],
           user_id: item.user_id,
           approved: item.approved,
@@ -768,7 +788,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
             contact_name: finalContactName,
             contact_phone: finalContactPhone,
             image_url: serializedImages,
-            tag: isRental ? 'Rental' : 'Owner Listed',
+            tag: isRental ? 'For Rent' : 'For Sale',
             user_id: user.id,
             approved: isAdmin, // Automatically approve if listed by Admin
             is_rental: isRental
@@ -818,7 +838,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
         contactName: finalContactName,
         contactPhone: finalContactPhone,
         image: serializedImages,
-        tag: isRental ? 'Rental' : 'Local Listing',
+        tag: isRental ? 'For Rent' : 'For Sale',
         date: new Date().toISOString().split('T')[0],
         user_id: user ? user.id : 'local-test-user',
         approved: isAdmin,
@@ -997,10 +1017,17 @@ function Marketplace({ user, setUser, setActiveTab }) {
     }
     if (filterPrice !== 'all') {
       const price = Number(prop.price) || 0;
-      if (filterPrice === 'under-20') return price < 2000000;
-      if (filterPrice === '20-50') return price >= 2000000 && price <= 5000000;
-      if (filterPrice === '50-100') return price > 5000000 && price <= 10000000;
-      if (filterPrice === 'over-100') return price > 10000000;
+      if (filterPurpose === 'rent') {
+        if (filterPrice === 'under-5') return price < 5000;
+        if (filterPrice === '5-10') return price >= 5000 && price <= 10000;
+        if (filterPrice === '10-15') return price > 10000 && price <= 15000;
+        if (filterPrice === 'over-15') return price > 15000;
+      } else {
+        if (filterPrice === 'under-20') return price < 2000000;
+        if (filterPrice === '20-50') return price >= 2000000 && price <= 5000000;
+        if (filterPrice === '50-100') return price > 5000000 && price <= 10000000;
+        if (filterPrice === 'over-100') return price > 10000000;
+      }
     }
     return true;
   });
@@ -1068,7 +1095,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           <div style={{ display: 'flex', gap: '10px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '6px' }}>
             <button
               className={`filter-btn ${filterPurpose === 'all' ? 'active' : ''}`}
-              onClick={() => setFilterPurpose('all')}
+              onClick={() => { setFilterPurpose('all'); setFilterPrice('all'); }}
               style={{ flex: 1, fontSize: '0.8rem', padding: '8px 0', border: 'none', borderRadius: '6px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}
             >
               <AllListingsIcon />
@@ -1076,7 +1103,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
             </button>
             <button
               className={`filter-btn ${filterPurpose === 'sale' ? 'active' : ''}`}
-              onClick={() => setFilterPurpose('sale')}
+              onClick={() => { setFilterPurpose('sale'); setFilterPrice('all'); }}
               style={{ flex: 1, fontSize: '0.8rem', padding: '8px 0', border: 'none', borderRadius: '6px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}
             >
               <ForSaleIcon />
@@ -1084,7 +1111,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
             </button>
             <button
               className={`filter-btn ${filterPurpose === 'rent' ? 'active' : ''}`}
-              onClick={() => setFilterPurpose('rent')}
+              onClick={() => { setFilterPurpose('rent'); setFilterPrice('all'); }}
               style={{ flex: 1, fontSize: '0.8rem', padding: '8px 0', border: 'none', borderRadius: '6px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}
             >
               <ForRentIcon />
@@ -1147,13 +1174,21 @@ function Marketplace({ user, setUser, setActiveTab }) {
                   <CustomSelect 
                     value={filterPrice}
                     onChange={setFilterPrice}
-                    options={[
-                      { value: 'all', label: 'Any Price Range' },
-                      { value: 'under-20', label: 'Under ₹20 Lakhs' },
-                      { value: '20-50', label: '₹20 Lakhs - ₹50 Lakhs' },
-                      { value: '50-100', label: '₹50 Lakhs - ₹1 Crore' },
-                      { value: 'over-100', label: 'Above ₹1 Crore' }
-                    ]}
+                    options={
+                      filterPurpose === 'rent' ? [
+                        { value: 'all', label: 'Any Rent Range' },
+                        { value: 'under-5', label: 'Under ₹5,000' },
+                        { value: '5-10', label: '₹5,000 - ₹10,000' },
+                        { value: '10-15', label: '₹10,000 - ₹15,000' },
+                        { value: 'over-15', label: 'Above ₹15,000' }
+                      ] : [
+                        { value: 'all', label: 'Any Price Range' },
+                        { value: 'under-20', label: 'Under ₹20 Lakhs' },
+                        { value: '20-50', label: '₹20 Lakhs - ₹50 Lakhs' },
+                        { value: '50-100', label: '₹50 Lakhs - ₹1 Crore' },
+                        { value: 'over-100', label: 'Above ₹1 Crore' }
+                      ]
+                    }
                   />
                 </div>
 
