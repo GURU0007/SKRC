@@ -176,6 +176,46 @@ const FilterIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
 );
 
+const AllListingsIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#all-listings-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <defs>
+      <linearGradient id="all-listings-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#00b4db" />
+        <stop offset="100%" stopColor="#0083b0" />
+      </linearGradient>
+    </defs>
+    <rect x="3" y="3" width="7" height="7"></rect>
+    <rect x="14" y="3" width="7" height="7"></rect>
+    <rect x="14" y="14" width="7" height="7"></rect>
+    <rect x="3" y="14" width="7" height="7"></rect>
+  </svg>
+);
+
+const ForSaleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#for-sale-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <defs>
+      <linearGradient id="for-sale-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#11998e" />
+        <stop offset="100%" stopColor="#38ef7d" />
+      </linearGradient>
+    </defs>
+    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+    <line x1="7" y1="7" x2="7.01" y2="7"></line>
+  </svg>
+);
+
+const ForRentIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="url(#for-rent-grad)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+    <defs>
+      <linearGradient id="for-rent-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#d4af37" />
+        <stop offset="100%" stopColor="#f5e6c8" />
+      </linearGradient>
+    </defs>
+    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.778-7.778zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+  </svg>
+);
+
 const getImagesArray = (imgField) => {
   if (!imgField) return ['/logo.jpeg'];
   if (typeof imgField === 'string' && imgField.startsWith('[')) {
@@ -221,6 +261,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
   const [showPendingOnly, setShowPendingOnly] = useState(() => {
     return localStorage.getItem('sri_krishna_marketplace_pending_only') === 'true';
   });
+  const [filterPurpose, setFilterPurpose] = useState('all'); // 'all', 'sale', 'rent'
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const filterContainerRef = useRef(null);
 
@@ -279,6 +320,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
   const [formDescription, setFormDescription] = useState('');
   const [formContactName, setFormContactName] = useState('');
   const [formContactPhone, setFormContactPhone] = useState('');
+  const [isRental, setIsRental] = useState(false);
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState('');
@@ -296,6 +338,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
   const [editImages, setEditImages] = useState([]); // Array of base64 strings
   const [editContactName, setEditContactName] = useState('');
   const [editContactPhone, setEditContactPhone] = useState('');
+  const [editIsRental, setEditIsRental] = useState(false);
   
   // Carousel active image indicator
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -373,6 +416,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
     setEditImages(getImagesArray(selectedProp.image));
     setEditContactName(selectedProp.contactName);
     setEditContactPhone(selectedProp.contactPhone);
+    setEditIsRental(selectedProp.is_rental || false);
     setIsEditing(false); // Reset editing form state first
     setIsEditing(true);
   };
@@ -388,6 +432,11 @@ function Marketplace({ user, setUser, setActiveTab }) {
       return;
     }
 
+    const FATHER_NAME = 'Murali Krishna Reddy';
+    const FATHER_PHONE = '+91 8985961113';
+
+    const finalContactName = editIsRental ? editContactName : FATHER_NAME;
+    const finalContactPhone = editIsRental ? editContactPhone : FATHER_PHONE;
     const isDefaultProp = typeof selectedProp.id === 'string' && selectedProp.id.startsWith('prop-');
     const serializedImages = editImages.length > 0 ? JSON.stringify(editImages) : '/logo.jpeg';
 
@@ -403,9 +452,11 @@ function Marketplace({ user, setUser, setActiveTab }) {
             facing: editFacing,
             location: editLocation,
             description: editDescription,
-            contact_name: editContactName,
-            contact_phone: editContactPhone,
-            image_url: serializedImages
+            contact_name: finalContactName,
+            contact_phone: finalContactPhone,
+            image_url: serializedImages,
+            is_rental: editIsRental,
+            tag: editIsRental ? 'Rental' : 'Owner Listed'
           })
           .eq('id', selectedProp.id);
 
@@ -420,9 +471,11 @@ function Marketplace({ user, setUser, setActiveTab }) {
           facing: editFacing,
           location: editLocation,
           description: editDescription,
-          contactName: editContactName,
-          contactPhone: editContactPhone,
-          image: serializedImages
+          contactName: finalContactName,
+          contactPhone: finalContactPhone,
+          image: serializedImages,
+          is_rental: editIsRental,
+          tag: editIsRental ? 'Rental' : 'Owner Listed'
         };
         setSelectedProp(updatedProp);
         setIsEditing(false);
@@ -452,7 +505,8 @@ function Marketplace({ user, setUser, setActiveTab }) {
           description: editDescription,
           contactName: editContactName,
           contactPhone: editContactPhone,
-          image: serializedImages
+          is_rental: editIsRental,
+          tag: editIsRental ? 'Rental' : 'Owner Listed'
         };
 
         // Replace existing edit or add new
@@ -462,7 +516,8 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
         const updatedProp = {
           ...selectedProp,
-          ...newEdit
+          ...newEdit,
+          tag: editIsRental ? 'Rental' : 'Owner Listed'
         };
         setSelectedProp(updatedProp);
         setIsEditing(false);
@@ -484,9 +539,11 @@ function Marketplace({ user, setUser, setActiveTab }) {
                   facing: editFacing,
                   location: editLocation,
                   description: editDescription,
-                  contactName: editContactName,
-                  contactPhone: editContactPhone,
-                  image: serializedImages
+                  contactName: finalContactName,
+                  contactPhone: finalContactPhone,
+                  image: serializedImages,
+                  is_rental: editIsRental,
+                  tag: editIsRental ? 'Rental' : 'Local Listing'
                 };
               }
               return p;
@@ -502,9 +559,11 @@ function Marketplace({ user, setUser, setActiveTab }) {
               facing: editFacing,
               location: editLocation,
               description: editDescription,
-              contactName: editContactName,
-              contactPhone: editContactPhone,
-              image: serializedImages
+              contactName: finalContactName,
+              contactPhone: finalContactPhone,
+              image: serializedImages,
+              is_rental: editIsRental,
+              tag: editIsRental ? 'Rental' : 'Local Listing'
             };
             setSelectedProp(updatedProp);
             setIsEditing(false);
@@ -593,7 +652,8 @@ function Marketplace({ user, setUser, setActiveTab }) {
           tag: item.tag || 'Owner Listed',
           date: item.created_at.split('T')[0],
           user_id: item.user_id,
-          approved: item.approved
+          approved: item.approved,
+          is_rental: item.is_rental || false
         }));
 
         // Database is the single source of truth when configured.
@@ -686,6 +746,12 @@ function Marketplace({ user, setUser, setActiveTab }) {
     const isAdmin = user && user.email === 'reddygarigsr@gmail.com';
     const serializedImages = formImages.length > 0 ? JSON.stringify(formImages) : '/logo.jpeg';
 
+    const FATHER_NAME = 'Murali Krishna Reddy';
+    const FATHER_PHONE = '+91 8985961113';
+
+    const finalContactName = isRental ? formContactName : FATHER_NAME;
+    const finalContactPhone = isRental ? formContactPhone : FATHER_PHONE;
+
     if (isSupabaseConfigured && user) {
       // Save directly to Supabase cloud Database
       try {
@@ -699,12 +765,13 @@ function Marketplace({ user, setUser, setActiveTab }) {
             facing: formFacing,
             location: formLocation,
             description: formDescription || 'No description provided.',
-            contact_name: formContactName,
-            contact_phone: formContactPhone,
+            contact_name: finalContactName,
+            contact_phone: finalContactPhone,
             image_url: serializedImages,
-            tag: 'Owner Listed',
+            tag: isRental ? 'Rental' : 'Owner Listed',
             user_id: user.id,
-            approved: isAdmin // Automatically approve if listed by Admin
+            approved: isAdmin, // Automatically approve if listed by Admin
+            is_rental: isRental
           }]);
  
         if (error) throw error;
@@ -748,13 +815,14 @@ function Marketplace({ user, setUser, setActiveTab }) {
         facing: formFacing,
         location: formLocation,
         description: formDescription || 'No description provided.',
-        contactName: formContactName,
-        contactPhone: formContactPhone,
+        contactName: finalContactName,
+        contactPhone: finalContactPhone,
         image: serializedImages,
-        tag: 'Local Listing',
+        tag: isRental ? 'Rental' : 'Local Listing',
         date: new Date().toISOString().split('T')[0],
         user_id: user ? user.id : 'local-test-user',
-        approved: isAdmin
+        approved: isAdmin,
+        is_rental: isRental
       };
  
       const saved = localStorage.getItem('sri_krishna_marketplace_listings');
@@ -778,6 +846,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
     setFormLocation('');
     setFormDescription('');
     setFormImages([]);
+    setIsRental(false);
     setFormLoading(false);
   };
 
@@ -898,6 +967,14 @@ function Marketplace({ user, setUser, setActiveTab }) {
       return false;
     }
 
+    // Filter by Buy vs Rent
+    if (filterPurpose === 'sale' && prop.is_rental) {
+      return false;
+    }
+    if (filterPurpose === 'rent' && !prop.is_rental) {
+      return false;
+    }
+
     if (searchQuery) {
       const query = searchQuery.trim().toLowerCase().replace(/[:\s]+/g, '');
       const cleanId = prop.propertyCode ? String(prop.propertyCode) : '';
@@ -986,6 +1063,34 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
       {activeSubTab === 'browse' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          {/* Segmented Buy / Rent Purpose Filter */}
+          <div style={{ display: 'flex', gap: '10px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '6px' }}>
+            <button
+              className={`filter-btn ${filterPurpose === 'all' ? 'active' : ''}`}
+              onClick={() => setFilterPurpose('all')}
+              style={{ flex: 1, fontSize: '0.8rem', padding: '8px 0', border: 'none', borderRadius: '6px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+            >
+              <AllListingsIcon />
+              <span>All Listings</span>
+            </button>
+            <button
+              className={`filter-btn ${filterPurpose === 'sale' ? 'active' : ''}`}
+              onClick={() => setFilterPurpose('sale')}
+              style={{ flex: 1, fontSize: '0.8rem', padding: '8px 0', border: 'none', borderRadius: '6px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+            >
+              <ForSaleIcon />
+              <span>For Sale</span>
+            </button>
+            <button
+              className={`filter-btn ${filterPurpose === 'rent' ? 'active' : ''}`}
+              onClick={() => setFilterPurpose('rent')}
+              style={{ flex: 1, fontSize: '0.8rem', padding: '8px 0', border: 'none', borderRadius: '6px', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}
+            >
+              <ForRentIcon />
+              <span>For Rent</span>
+            </button>
+          </div>
           
           {/* Filters Panel */}
           <div className="panel" style={{ padding: '16px' }} ref={filterContainerRef}>
@@ -1233,13 +1338,26 @@ function Marketplace({ user, setUser, setActiveTab }) {
                       </div>
                     </div>
 
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                      <input 
+                        type="checkbox" 
+                        id="edit-is-rental-checkbox"
+                        checked={editIsRental}
+                        onChange={(e) => setEditIsRental(e.target.checked)}
+                        style={{ cursor: 'pointer', width: '16px', height: '16px', margin: 0 }}
+                      />
+                      <label htmlFor="edit-is-rental-checkbox" style={{ fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', margin: 0, userSelect: 'none', color: 'var(--accent-gold)' }}>
+                        List as a Rental Property (For Rent)
+                      </label>
+                    </div>
+
                     <div className="form-row" style={{ gap: '12px' }}>
                       <div className="form-group">
-                        <label>Asking Price (INR)</label>
+                        <label>{editIsRental ? 'Monthly Rent (INR)' : 'Asking Price (INR)'}</label>
                         <input 
                           type="text" 
                           className="form-input" 
-                          placeholder="e.g. 65,00,000 or 65 Lakhs"
+                          placeholder={editIsRental ? 'e.g. 15,000 or 12k per month' : 'e.g. 65,00,000 or 65 Lakhs'}
                           value={editPrice}
                           onChange={(e) => setEditPrice(e.target.value)}
                           required 
@@ -1521,15 +1639,12 @@ function Marketplace({ user, setUser, setActiveTab }) {
                           <div>
                             <p style={{ fontWeight: '700', fontSize: '0.9rem' }}>{selectedProp.contactName}</p>
                             <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                              Phone: +91 8985961113
+                              Phone: {selectedProp.contactPhone}
                             </p>
                           </div>
                           <div style={{ display: 'flex', gap: '10px' }}>
                             <a 
-                              href={getWhatsAppLink({
-                                ...selectedProp,
-                                contactPhone: '8985961113'
-                              })} 
+                              href={getWhatsAppLink(selectedProp)} 
                               target="_blank" 
                               rel="noopener noreferrer"
                               className="gold-button"
@@ -1538,7 +1653,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                               💬 WhatsApp
                             </a>
                             <a 
-                              href="tel:8985961113" 
+                              href={`tel:${selectedProp.contactPhone}`} 
                               className="gold-button" 
                               style={{ textDecoration: 'none', padding: '8px 16px', fontSize: '0.8rem' }}
                             >
@@ -1641,13 +1756,26 @@ function Marketplace({ user, setUser, setActiveTab }) {
                     </div>
                   </div>
 
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                    <input 
+                      type="checkbox" 
+                      id="is-rental-checkbox"
+                      checked={isRental}
+                      onChange={(e) => setIsRental(e.target.checked)}
+                      style={{ cursor: 'pointer', width: '16px', height: '16px', margin: 0 }}
+                    />
+                    <label htmlFor="is-rental-checkbox" style={{ fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer', margin: 0, userSelect: 'none', color: 'var(--accent-gold)' }}>
+                      List as a Rental Property (For Rent)
+                    </label>
+                  </div>
+
                   <div className="form-row">
                     <div className="form-group">
-                      <label>Asking Price (INR)</label>
+                      <label>{isRental ? 'Monthly Rent (INR)' : 'Asking Price (INR)'}</label>
                       <input 
                         type="text" 
                         className="form-input" 
-                        placeholder="e.g. 65,00,000 or 65 Lakhs"
+                        placeholder={isRental ? 'e.g. 15,000 or 12k per month' : 'e.g. 65,00,000 or 65 Lakhs'}
                         value={formPrice}
                         onChange={(e) => setFormPrice(e.target.value)}
                         required 
