@@ -52,20 +52,7 @@ function App() {
   });
   const [recoveryMode, setRecoveryMode] = useState(false);
   const [isProfileDrawerOpen, setIsProfileDrawerOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const toastTimeoutRef = useRef(null);
-  const sessionInitialized = useRef(false);
 
-  const showToast = (message) => {
-    if (toastTimeoutRef.current) {
-      clearTimeout(toastTimeoutRef.current);
-    }
-    setToastMessage(message);
-    toastTimeoutRef.current = setTimeout(() => {
-      setToastMessage('');
-      toastTimeoutRef.current = null;
-    }, 2500);
-  };
 
   // Sync activeTab changes to URL search parameters & browser history stack
   useEffect(() => {
@@ -117,7 +104,6 @@ function App() {
             const { data, error } = await supabase.auth.exchangeCodeForSession(code);
              if (!error && data?.session) {
               setUser(data.session.user);
-              showToast('You have been logged in successfully.');
             }
             processedCodes.push(code);
             sessionStorage.setItem('sri_krishna_processed_codes', JSON.stringify(processedCodes));
@@ -128,7 +114,6 @@ function App() {
       }
 
       if (isCallback) {
-        showToast('You have been logged in successfully.');
         // Since the user returned via an auth link/OAuth redirect, land them directly in the marketplace
         localStorage.setItem('sri_krishna_marketplace_sub_tab', 'browse');
         localStorage.setItem('sri_krishna_marketplace_my_listings', 'false');
@@ -151,29 +136,10 @@ function App() {
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
-      sessionInitialized.current = true;
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      
-      if (event === 'SIGNED_IN') {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const isCallback = code || window.location.hash.includes('access_token');
-        
-        if (!sessionInitialized.current) {
-          sessionInitialized.current = true;
-          if (isCallback) {
-            showToast('You have been logged in successfully.');
-          }
-        } else {
-          showToast('You have been logged in successfully.');
-        }
-      } else if (event === 'SIGNED_OUT') {
-        sessionInitialized.current = true;
-      }
-
       if (event === 'PASSWORD_RECOVERY') {
         setRecoveryMode(true);
         setActiveTab('login');
@@ -183,9 +149,6 @@ function App() {
     return () => {
       window.removeEventListener('popstate', handlePopState);
       subscription.unsubscribe();
-      if (toastTimeoutRef.current) {
-        clearTimeout(toastTimeoutRef.current);
-      }
     };
   }, []);
 
@@ -200,7 +163,6 @@ function App() {
       window.localStorage.removeItem('sri-krishna-real-estate-auth');
     }
     setUser(null);
-    showToast('You have been logged out successfully.');
   };
 
   // Redirect to marketplace automatically once user logs in from the login tab
@@ -327,9 +289,6 @@ function App() {
             setUser={setUser} 
             recoveryMode={recoveryMode} 
             setRecoveryMode={setRecoveryMode} 
-            onLoginSuccess={(msg) => {
-              showToast(msg);
-            }}
           />
         )}
 
@@ -432,29 +391,6 @@ function App() {
           </div>
         </div>
       </div>
-      
-      {/* Floating Logout Toast Notification */}
-      {toastMessage && (
-        <div style={{
-          position: 'fixed',
-          top: '90px',
-          right: '30px',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--accent-gold)',
-          borderRadius: '8px',
-          padding: '12px 20px',
-          boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
-          color: '#fff',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          animation: 'fadeIn 0.3s ease'
-        }}>
-          <span style={{ color: 'var(--accent-gold)', fontSize: '1.2rem', fontWeight: 'bold' }}>✓</span>
-          <span style={{ fontSize: '0.85rem', fontWeight: '500' }}>{toastMessage}</span>
-        </div>
-      )}
     </div>
   );
 }
