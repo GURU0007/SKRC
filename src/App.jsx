@@ -194,6 +194,26 @@ function App() {
     setActiveTab('contact');
   };
 
+  if (user && !user.user_metadata?.phone && !recoveryMode) {
+    return (
+      <div className="app-container" style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-primary)', padding: '20px' }}>
+        <div style={{ width: '100%', maxWidth: '480px', margin: 'auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+            <h2 style={{ color: 'var(--accent-gold)', marginBottom: '8px' }}>Sri Krishna Real Estate</h2>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Please complete your registration setup</p>
+          </div>
+          <Login 
+            user={user} 
+            setUser={setUser} 
+            recoveryMode={recoveryMode} 
+            setRecoveryMode={setRecoveryMode} 
+            onLogout={handleLogout}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       {/* Brand Navbar */}

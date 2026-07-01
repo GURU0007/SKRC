@@ -10,7 +10,7 @@ const EyeOffIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
 );
 
-function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
+function Login({ user, setUser, recoveryMode, setRecoveryMode, onLoginSuccess, onLogout }) {
   const [authStep, setAuthStep] = useState('email'); // 'email', 'password', 'otp', 'register-profile'
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
@@ -88,11 +88,11 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
 
     if (isSupabaseConfigured) {
       try {
-        const { data, error } = await supabase.rpc('check_email_exists', {
+        const { data, error } = await supabase.rpc('has_password_set', {
           user_email: authEmail
         });
         if (error) {
-          console.warn("RPC check_email_exists not found. Defaulting to password screen to prevent OTP spam.");
+          console.warn("RPC has_password_set not found. Defaulting to password screen to prevent OTP spam.");
           exists = true;
         } else {
           exists = data;
@@ -433,7 +433,7 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
       <div className="panel-content">
         
         {recoveryMode ? (
-          <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <form onSubmit={handleUpdatePassword} autoComplete="off" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div className="form-group">
               <label>New Password</label>
               <div style={{ position: 'relative' }}>
@@ -566,19 +566,36 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
               style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
             >
               
-              {/* Email field (Read-only on sub-steps) */}
-              <div className="form-group">
-                <label>Email Address</label>
-                <input 
-                  type="email" 
-                  className="form-input" 
-                  placeholder="Enter email address" 
-                  value={authEmail}
-                  onChange={(e) => setAuthEmail(e.target.value)}
-                  required
-                  disabled={authStep !== 'email'}
-                />
-              </div>
+              {/* Email field (Read-only on sub-steps, static text on profile setup) */}
+              {authStep !== 'register-profile' ? (
+                <div className="form-group">
+                  <label>Email Address</label>
+                  <input 
+                    type="email" 
+                    className="form-input" 
+                    placeholder="Enter email address" 
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    required
+                    disabled={authStep !== 'email'}
+                  />
+                </div>
+              ) : (
+                <div className="form-group">
+                  <label>Email Address</label>
+                  <div style={{ 
+                    padding: '12px 14px', 
+                    background: 'rgba(255, 255, 255, 0.03)', 
+                    border: '1px solid var(--border-color)', 
+                    borderRadius: '6px', 
+                    fontSize: '0.9rem', 
+                    color: 'var(--text-secondary)',
+                    userSelect: 'none'
+                  }}>
+                    {authEmail}
+                  </div>
+                </div>
+              )}
 
               {/* Password field (Existing Users) */}
               {authStep === 'password' && (
@@ -641,6 +658,23 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
               {/* Complete Profile fields (New Users / Register Step) */}
               {authStep === 'register-profile' && (
                 <>
+                  {/* Hidden inputs to catch browser credential autofill and protect the real fields */}
+                  <input 
+                    type="text" 
+                    name="email_autofill_trap" 
+                    autoComplete="username" 
+                    style={{ position: 'absolute', top: '-1000px', left: '-1000px', opacity: 0, height: 0, width: 0 }} 
+                    value={authEmail}
+                    readOnly
+                  />
+                  <input 
+                    type="password" 
+                    name="password_autofill_trap" 
+                    autoComplete="new-password" 
+                    style={{ position: 'absolute', top: '-1000px', left: '-1000px', opacity: 0, height: 0, width: 0 }} 
+                    readOnly 
+                  />
+
                   <div className="form-group">
                     <label>Phone Number</label>
                     <input 
@@ -650,6 +684,10 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                       value={authPhone}
                       onChange={(e) => setAuthPhone(e.target.value)}
                       required
+                      autoComplete="new-phone-number-field"
+                      readOnly
+                      onFocus={(e) => e.target.removeAttribute('readonly')}
+                      onClick={(e) => e.target.removeAttribute('readonly')}
                     />
                   </div>
                   <div className="form-group">
@@ -663,6 +701,10 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                         onChange={(e) => setAuthPassword(e.target.value)}
                         style={{ paddingRight: '45px', width: '100%' }}
                         required
+                        autoComplete="new-password"
+                        readOnly
+                        onFocus={(e) => e.target.removeAttribute('readonly')}
+                        onClick={(e) => e.target.removeAttribute('readonly')}
                       />
                       <button
                         type="button"
@@ -695,6 +737,10 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
+                      autoComplete="new-password"
+                      readOnly
+                      onFocus={(e) => e.target.removeAttribute('readonly')}
+                      onClick={(e) => e.target.removeAttribute('readonly')}
                     />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
                       <input 
@@ -775,6 +821,24 @@ function Login({ user, setUser, recoveryMode, setRecoveryMode }) {
                         : 'Verify & Sign In'
                 )}
               </button>
+
+              {authStep === 'register-profile' && onLogout && (
+                <button 
+                  type="button" 
+                  className="filter-btn" 
+                  onClick={onLogout}
+                  style={{ 
+                    width: '100%', 
+                    marginTop: '10px',
+                    padding: '12px',
+                    borderColor: 'var(--accent-red)',
+                    color: 'var(--accent-red)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel Registration & Sign Out
+                </button>
+              )}
 
               {/* Bottom links to toggle flows */}
               <div style={{ textAlign: 'center', marginTop: '15px', fontSize: '0.8rem' }}>

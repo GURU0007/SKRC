@@ -2,6 +2,41 @@ import React, { useState, useEffect, useRef } from 'react';
 import CustomSelect from './CustomSelect';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
+const parseNumericPrice = (val) => {
+  if (!val) return 0;
+  let cleaned = String(val).replace(/[₹\s,]/g, '').trim();
+  
+  if (/lakh/i.test(cleaned)) {
+    const multiplier = 100000;
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : Math.round(num * multiplier);
+  }
+  if (/crore|cr/i.test(cleaned)) {
+    const multiplier = 10000000;
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : Math.round(num * multiplier);
+  }
+  if (/k$/i.test(cleaned)) {
+    const multiplier = 1000;
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : Math.round(num * multiplier);
+  }
+  
+  const parsed = Number(cleaned);
+  return isNaN(parsed) ? cleaned : parsed;
+};
+
+const parseNumericSize = (val) => {
+  if (!val) return 0;
+  let cleaned = String(val).replace(/,/g, '').trim();
+  let match = cleaned.match(/\d+(\.\d+)?/);
+  if (match) {
+    return parseFloat(match[0]);
+  }
+  return 0;
+};
+
+
 // Initial default properties for Kurnool district
 const DEFAULT_PROPERTIES = [
   {
@@ -360,6 +395,18 @@ function Marketplace({ user, setUser, setActiveTab }) {
   
   // Carousel active image indicator
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const fileInputRef = useRef(null);
+  const editFileInputRef = useRef(null);
+  const [validationErrors, setValidationErrors] = useState({});
+
+  const handleFieldChange = (field, value, setter) => {
+    setter(value);
+    setValidationErrors(prev => {
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   useEffect(() => {
     setActiveImageIndex(0);
@@ -410,8 +457,22 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
   const handleEditImageUpload = async (e) => {
     const files = Array.from(e.target.files);
+    const allowedExtensions = /(\.png|\.jpg|\.jpeg|\.webp)$/i;
+    const nonImages = files.filter(file => {
+      const hasImgExt = allowedExtensions.test(file.name);
+      const isGif = file.type && file.type === 'image/gif';
+      return !hasImgExt || isGif;
+    });
+    
+    if (nonImages.length > 0) {
+      alert('Only static image files (PNG, JPG, JPEG, WEBP) are allowed. GIF files are not permitted.');
+      if (editFileInputRef.current) editFileInputRef.current.value = "";
+      return;
+    }
+    
     if (editImages.length + files.length > 5) {
       alert('You can upload a maximum of 5 photos per listing.');
+      if (editFileInputRef.current) editFileInputRef.current.value = "";
       return;
     }
     
@@ -420,6 +481,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
     const base64Results = await Promise.all(promises);
     setEditImages(prev => [...prev, ...base64Results].slice(0, 5));
     setFormLoading(false);
+    if (editFileInputRef.current) editFileInputRef.current.value = "";
   };
 
   const handleStartEdit = () => {
@@ -441,12 +503,57 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    if (!editTitle || !editPrice || !editSize || !editLocation || !editDescription || !editContactPhone || !editContactName) {
-      alert('All fields are mandatory, including Description.');
+    if (!editTitle) {
+      alert('Please enter a listing title.');
+      document.getElementById('edit-title')?.focus();
+      return;
+    }
+    if (!editPrice) {
+      alert('Please enter a price.');
+      document.getElementById('edit-price')?.focus();
+      return;
+    }
+    if (!editSize) {
+      alert('Please enter property size.');
+      document.getElementById('edit-size')?.focus();
+      return;
+    }
+    const numericEditSize = parseNumericSize(editSize);
+    if (isNaN(numericEditSize) || numericEditSize <= 0) {
+      alert('Please enter a valid property size starting with a number (e.g., 1500 Sq. Ft. or 5 Cents).');
+      document.getElementById('edit-size')?.focus();
+      return;
+    }
+    if (!editLocation) {
+      alert('Please enter location.');
+      document.getElementById('edit-location')?.focus();
+      return;
+    }
+    if (!editDescription) {
+      alert('Please enter description.');
+      document.getElementById('edit-description')?.focus();
       return;
     }
     if (editImages.length === 0) {
       alert('Please upload at least one property image.');
+      document.getElementById('edit-images-upload')?.focus();
+      return;
+    }
+    if (!editContactName) {
+      alert('Please enter contact name.');
+      document.getElementById('edit-contact-name')?.focus();
+      return;
+    }
+    if (!editContactPhone) {
+      alert('Please enter contact phone number.');
+      document.getElementById('edit-contact-phone')?.focus();
+      return;
+    }
+
+    const numericPrice = parseNumericPrice(editPrice);
+    if (isNaN(Number(numericPrice)) || Number(numericPrice) <= 0) {
+      alert('Please enter a valid price (numbers only, e.g., 10,000 or 15 Lakhs).');
+      document.getElementById('edit-price')?.focus();
       return;
     }
 
@@ -465,7 +572,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           .update({
             title: editTitle,
             type: editType,
-            price: editPrice,
+            price: numericPrice,
             size: editSize,
             facing: editFacing,
             location: editLocation,
@@ -484,7 +591,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           ...selectedProp,
           title: editTitle,
           type: editType,
-          price: editPrice,
+          price: numericPrice,
           size: editSize,
           facing: editFacing,
           location: editLocation,
@@ -503,7 +610,6 @@ function Marketplace({ user, setUser, setActiveTab }) {
       }
     } else {
       if (isDefaultProp) {
-        // Save edit to edited defaults list in localStorage
         const editedSaved = localStorage.getItem('sri_krishna_edited_defaults');
         let editedDefaults = [];
         if (editedSaved) {
@@ -516,7 +622,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
           id: selectedProp.id,
           title: editTitle,
           type: editType,
-          price: editPrice,
+          price: numericPrice,
           size: editSize,
           facing: editFacing,
           location: editLocation,
@@ -527,7 +633,6 @@ function Marketplace({ user, setUser, setActiveTab }) {
           tag: editIsRental ? 'For Rent' : 'For Sale'
         };
 
-        // Replace existing edit or add new
         editedDefaults = editedDefaults.filter(ed => ed.id !== selectedProp.id);
         editedDefaults.push(newEdit);
         localStorage.setItem('sri_krishna_edited_defaults', JSON.stringify(editedDefaults));
@@ -541,7 +646,6 @@ function Marketplace({ user, setUser, setActiveTab }) {
         setIsEditing(false);
         fetchProperties();
       } else {
-        // Local storage edit save
         const saved = localStorage.getItem('sri_krishna_marketplace_listings');
         if (saved) {
           try {
@@ -552,7 +656,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                   ...p,
                   title: editTitle,
                   type: editType,
-                  price: editPrice,
+                  price: numericPrice,
                   size: editSize,
                   facing: editFacing,
                   location: editLocation,
@@ -572,7 +676,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
               ...selectedProp,
               title: editTitle,
               type: editType,
-              price: editPrice,
+              price: numericPrice,
               size: editSize,
               facing: editFacing,
               location: editLocation,
@@ -594,8 +698,22 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files);
+    const allowedExtensions = /(\.png|\.jpg|\.jpeg|\.webp)$/i;
+    const nonImages = files.filter(file => {
+      const hasImgExt = allowedExtensions.test(file.name);
+      const isGif = file.type && file.type === 'image/gif';
+      return !hasImgExt || isGif;
+    });
+    
+    if (nonImages.length > 0) {
+      alert('Only static image files (PNG, JPG, JPEG, WEBP) are allowed. GIF files are not permitted.');
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
+    
     if (formImages.length + files.length > 5) {
       alert('You can upload a maximum of 5 photos per listing.');
+      if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
     
@@ -604,6 +722,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
     const base64Results = await Promise.all(promises);
     setFormImages(prev => [...prev, ...base64Results].slice(0, 5));
     setFormLoading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   // 1. Pre-fill listing contact details when user changes
@@ -751,123 +870,194 @@ function Marketplace({ user, setUser, setActiveTab }) {
 
   // 4. Form submission handler for new listing
   const handleAddProperty = async (e) => {
-    e.preventDefault();
-    setFormError('');
-    if (!formTitle || !formPrice || !formSize || !formLocation || !formDescription || !formContactPhone || !formContactName) {
-      setFormError('All fields are mandatory, including Description.');
-      return;
-    }
-    if (formImages.length === 0) {
-      setFormError('Please upload at least one property image.');
-      return;
-    }
+    try {
+      e.preventDefault();
+      setFormError('');
+      setValidationErrors({});
+      console.log('Publish Listing clicked. Form states:', {
+        formTitle, formPrice, formSize, formLocation, formDescription, formContactPhone, formContactName, formImages
+      });
 
-    setFormLoading(true);
-    const isAdmin = user && user.email === 'reddygarigsr@gmail.com';
-    const serializedImages = formImages.length > 0 ? JSON.stringify(formImages) : '/logo.jpeg';
+      if (!formTitle) {
+        setValidationErrors(prev => ({ ...prev, title: 'Please enter a listing title.' }));
+        const el = document.getElementById('listing-title');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
+      if (!formPrice) {
+        setValidationErrors(prev => ({ ...prev, price: 'Please enter a price.' }));
+        const el = document.getElementById('listing-price');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
+      if (!formSize) {
+        setValidationErrors(prev => ({ ...prev, size: 'Please enter property size.' }));
+        const el = document.getElementById('listing-size');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
+      const numericSize = parseNumericSize(formSize);
+      if (isNaN(numericSize) || numericSize <= 0) {
+        setValidationErrors(prev => ({ ...prev, size: 'Please enter a valid size starting with a number (e.g., 1500 Sq. Ft. or 5 Cents).' }));
+        const el = document.getElementById('listing-size');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
+      if (!formLocation) {
+        setValidationErrors(prev => ({ ...prev, location: 'Please enter location.' }));
+        const el = document.getElementById('listing-location');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
+      if (!formDescription) {
+        setValidationErrors(prev => ({ ...prev, description: 'Please enter a detailed description.' }));
+        const el = document.getElementById('listing-description');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
+      if (formImages.length === 0) {
+        setValidationErrors(prev => ({ ...prev, images: 'Please upload at least one property image.' }));
+        const el = document.getElementById('listing-images-upload');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
+      if (!formContactName) {
+        setValidationErrors(prev => ({ ...prev, contactName: 'Please enter contact name.' }));
+        const el = document.getElementById('listing-contact-name');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
+      if (!formContactPhone) {
+        setValidationErrors(prev => ({ ...prev, contactPhone: 'Please enter contact phone number.' }));
+        const el = document.getElementById('listing-contact-phone');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
 
-    const FATHER_NAME = 'Murali Krishna Reddy';
-    const FATHER_PHONE = '+91 8985961113';
+      const numericPrice = parseNumericPrice(formPrice);
+      if (isNaN(Number(numericPrice)) || Number(numericPrice) <= 0) {
+        setValidationErrors(prev => ({ ...prev, price: 'Please enter a valid numeric price (e.g., 10,000 or 15 Lakhs).' }));
+        const el = document.getElementById('listing-price');
+        if (el) { el.focus(); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+        return;
+      }
 
-    const finalContactName = isRental ? formContactName : FATHER_NAME;
-    const finalContactPhone = isRental ? formContactPhone : FATHER_PHONE;
+      setFormLoading(true);
+      const isAdmin = user && user.email === 'reddygarigsr@gmail.com';
+      const serializedImages = formImages.length > 0 ? JSON.stringify(formImages) : '/logo.jpeg';
 
-    if (isSupabaseConfigured && user) {
-      // Save directly to Supabase cloud Database
-      try {
-        const { data, error } = await supabase
-          .from('properties')
-          .insert([{
+      const FATHER_NAME = 'Murali Krishna Reddy';
+      const FATHER_PHONE = '+91 8985961113';
+
+      const finalContactName = isRental ? formContactName : FATHER_NAME;
+      const finalContactPhone = isRental ? formContactPhone : FATHER_PHONE;
+
+      const resetFormFields = () => {
+        setFormTitle('');
+        setFormPrice('');
+        setFormSize('');
+        setFormLocation('');
+        setFormDescription('');
+        setFormImages([]);
+        setIsRental(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      };
+
+      if (isSupabaseConfigured && user) {
+        try {
+          const { data, error } = await supabase
+            .from('properties')
+            .insert([{
+              title: formTitle,
+              type: formType,
+              price: numericPrice,
+              size: formSize,
+              facing: formFacing,
+              location: formLocation,
+              description: formDescription || 'No description provided.',
+              contact_name: finalContactName,
+              contact_phone: finalContactPhone,
+              image_url: serializedImages,
+              tag: isRental ? 'For Rent' : 'For Sale',
+              user_id: user.id,
+              approved: isAdmin,
+              is_rental: isRental
+            }]);
+ 
+          if (error) throw error;
+          setFormSubmitted(true);
+          resetFormFields();
+          fetchProperties();
+        } catch (err) {
+          const msg = err.message || 'Failed to list property in cloud database.';
+          setFormError(msg);
+        }
+      } else {
+        try {
+          let nextSeq = Number(localStorage.getItem('sri_krishna_property_code_seq'));
+          if (!nextSeq) {
+            let maxCode = 1009;
+            const savedListings = localStorage.getItem('sri_krishna_marketplace_listings');
+            if (savedListings) {
+              try {
+                const parsed = JSON.parse(savedListings);
+                parsed.forEach(p => {
+                  const codeNum = Number(p.propertyCode);
+                  if (codeNum && codeNum > maxCode) {
+                    maxCode = codeNum;
+                  }
+                });
+              } catch (e) {}
+            }
+            nextSeq = maxCode + 1;
+          }
+          
+          const assignedCode = nextSeq;
+          localStorage.setItem('sri_krishna_property_code_seq', String(nextSeq + 1));
+
+          const newProperty = {
+            id: `custom-${Date.now()}`,
+            propertyCode: assignedCode,
             title: formTitle,
             type: formType,
-            price: formPrice,
+            price: numericPrice,
             size: formSize,
             facing: formFacing,
             location: formLocation,
             description: formDescription || 'No description provided.',
-            contact_name: finalContactName,
-            contact_phone: finalContactPhone,
-            image_url: serializedImages,
+            contactName: finalContactName,
+            contactPhone: finalContactPhone,
+            image: serializedImages,
             tag: isRental ? 'For Rent' : 'For Sale',
-            user_id: user.id,
-            approved: isAdmin, // Automatically approve if listed by Admin
+            date: new Date().toISOString().split('T')[0],
+            user_id: user ? user.id : 'local-test-user',
+            approved: isAdmin,
             is_rental: isRental
-          }]);
- 
-        if (error) throw error;
-        setFormSubmitted(true);
-        fetchProperties();
-      } catch (err) {
-        setFormError(err.message || 'Failed to list property in cloud database.');
-      }
-    } else {
-      // Mock / Offline LocalStorage Save
-      
-      // Determine the next property code sequentially
-      let nextSeq = Number(localStorage.getItem('sri_krishna_property_code_seq'));
-      if (!nextSeq) {
-        let maxCode = 1009; // Default properties end at 1009
-        const savedListings = localStorage.getItem('sri_krishna_marketplace_listings');
-        if (savedListings) {
-          try {
-            const parsed = JSON.parse(savedListings);
-            parsed.forEach(p => {
-              const codeNum = Number(p.propertyCode);
-              if (codeNum && codeNum > maxCode) {
-                maxCode = codeNum;
-              }
-            });
-          } catch (e) {}
+          };
+     
+          const saved = localStorage.getItem('sri_krishna_marketplace_listings');
+          let currentSaved = [];
+          if (saved) {
+            try {
+              currentSaved = JSON.parse(saved);
+            } catch (err) {}
+          }
+          
+          const updatedSaved = [newProperty, ...currentSaved];
+          localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(updatedSaved));
+          setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...updatedSaved]);
+          setFormSubmitted(true);
+          resetFormFields();
+        } catch (err) {
+          setFormError('Failed to list property locally.');
         }
-        nextSeq = maxCode + 1;
       }
-      
-      const assignedCode = nextSeq;
-      localStorage.setItem('sri_krishna_property_code_seq', String(nextSeq + 1));
-
-      const newProperty = {
-        id: `custom-${Date.now()}`,
-        propertyCode: assignedCode,
-        title: formTitle,
-        type: formType,
-        price: formPrice,
-        size: formSize,
-        facing: formFacing,
-        location: formLocation,
-        description: formDescription || 'No description provided.',
-        contactName: finalContactName,
-        contactPhone: finalContactPhone,
-        image: serializedImages,
-        tag: isRental ? 'For Rent' : 'For Sale',
-        date: new Date().toISOString().split('T')[0],
-        user_id: user ? user.id : 'local-test-user',
-        approved: isAdmin,
-        is_rental: isRental
-      };
- 
-      const saved = localStorage.getItem('sri_krishna_marketplace_listings');
-      let currentSaved = [];
-      if (saved) {
-        try {
-          currentSaved = JSON.parse(saved);
-        } catch (err) {}
-      }
-      
-      const updatedSaved = [newProperty, ...currentSaved];
-      localStorage.setItem('sri_krishna_marketplace_listings', JSON.stringify(updatedSaved));
-      setListings([...getProcessedDefaults().map(p => ({ ...p, approved: true })), ...updatedSaved]);
-      setFormSubmitted(true);
+    } catch (globalErr) {
+      console.error('FATAL SUBMIT ERROR:', globalErr);
+      setFormError('Fatal Submit Error: ' + globalErr.message);
+    } finally {
+      setFormLoading(false);
     }
-    
-    // Reset inputs
-    setFormTitle('');
-    setFormPrice('');
-    setFormSize('');
-    setFormLocation('');
-    setFormDescription('');
-    setFormImages([]);
-    setIsRental(false);
-    setFormLoading(false);
   };
 
   // 5. Delete Listing handler (checks ownership or admin privileges)
@@ -1340,6 +1530,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         required 
+                        id="edit-title"
                       />
                     </div>
 
@@ -1396,6 +1587,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                           value={editPrice}
                           onChange={(e) => setEditPrice(e.target.value)}
                           required 
+                          id="edit-price"
                         />
                       </div>
 
@@ -1407,6 +1599,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                           value={editSize}
                           onChange={(e) => setEditSize(e.target.value)}
                           required 
+                          id="edit-size"
                         />
                       </div>
                     </div>
@@ -1419,6 +1612,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                         value={editLocation}
                         onChange={(e) => setEditLocation(e.target.value)}
                         required 
+                        id="edit-location"
                       />
                     </div>
 
@@ -1430,6 +1624,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                         value={editDescription}
                         onChange={(e) => setEditDescription(e.target.value)}
                         required
+                        id="edit-description"
                       />
                     </div>
 
@@ -1443,6 +1638,8 @@ function Marketplace({ user, setUser, setActiveTab }) {
                         multiple
                         style={{ background: 'transparent', border: '1px dashed var(--border-color)', padding: '5px' }}
                         disabled={editImages.length >= 5}
+                        ref={editFileInputRef}
+                        id="edit-images-upload"
                       />
                       {editImages.length > 0 && (
                         <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
@@ -1498,6 +1695,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                             value={editContactName}
                             onChange={(e) => setEditContactName(e.target.value)}
                             required 
+                            id="edit-contact-name"
                           />
                         </div>
                         <div className="form-group">
@@ -1508,6 +1706,7 @@ function Marketplace({ user, setUser, setActiveTab }) {
                             value={editContactPhone}
                             onChange={(e) => setEditContactPhone(e.target.value)}
                             required 
+                            id="edit-contact-phone"
                           />
                         </div>
                       </div>
@@ -1756,9 +1955,16 @@ function Marketplace({ user, setUser, setActiveTab }) {
                       className="form-input" 
                       placeholder="e.g. 3 BHK Gated Villa near budhawara Peta"
                       value={formTitle}
-                      onChange={(e) => setFormTitle(e.target.value)}
+                      onChange={(e) => handleFieldChange('title', e.target.value, setFormTitle)}
                       required 
+                      id="listing-title"
+                      style={{ borderColor: validationErrors.title ? 'var(--accent-red)' : '' }}
                     />
+                    {validationErrors.title && (
+                      <span style={{ color: 'var(--accent-red)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                        {validationErrors.title}
+                      </span>
+                    )}
                   </div>
 
                   <div className="form-row">
@@ -1812,9 +2018,16 @@ function Marketplace({ user, setUser, setActiveTab }) {
                         className="form-input" 
                         placeholder={isRental ? 'e.g. 15,000 or 12k per month' : 'e.g. 65,00,000 or 65 Lakhs'}
                         value={formPrice}
-                        onChange={(e) => setFormPrice(e.target.value)}
+                        onChange={(e) => handleFieldChange('price', e.target.value, setFormPrice)}
                         required 
+                        id="listing-price"
+                        style={{ borderColor: validationErrors.price ? 'var(--accent-red)' : '' }}
                       />
+                      {validationErrors.price && (
+                        <span style={{ color: 'var(--accent-red)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                          {validationErrors.price}
+                        </span>
+                      )}
                     </div>
 
                     <div className="form-group">
@@ -1824,9 +2037,16 @@ function Marketplace({ user, setUser, setActiveTab }) {
                         className="form-input" 
                         placeholder="e.g. 1500 Sq. Ft. or 5 Cents"
                         value={formSize}
-                        onChange={(e) => setFormSize(e.target.value)}
+                        onChange={(e) => handleFieldChange('size', e.target.value, setFormSize)}
                         required 
+                        id="listing-size"
+                        style={{ borderColor: validationErrors.size ? 'var(--accent-red)' : '' }}
                       />
+                      {validationErrors.size && (
+                        <span style={{ color: 'var(--accent-red)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                          {validationErrors.size}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -1837,9 +2057,16 @@ function Marketplace({ user, setUser, setActiveTab }) {
                       className="form-input" 
                       placeholder="e.g. Bellary Road, beside Union Bank, Kurnool"
                       value={formLocation}
-                      onChange={(e) => setFormLocation(e.target.value)}
+                      onChange={(e) => handleFieldChange('location', e.target.value, setFormLocation)}
                       required 
+                      id="listing-location"
+                      style={{ borderColor: validationErrors.location ? 'var(--accent-red)' : '' }}
                     />
+                    {validationErrors.location && (
+                      <span style={{ color: 'var(--accent-red)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                        {validationErrors.location}
+                      </span>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -1849,9 +2076,16 @@ function Marketplace({ user, setUser, setActiveTab }) {
                       rows="4" 
                       placeholder="Describe amenities, surroundings, road width, approvals, construction state..."
                       value={formDescription}
-                      onChange={(e) => setFormDescription(e.target.value)}
+                      onChange={(e) => handleFieldChange('description', e.target.value, setFormDescription)}
                       required
+                      id="listing-description"
+                      style={{ borderColor: validationErrors.description ? 'var(--accent-red)' : '' }}
                     />
+                    {validationErrors.description && (
+                      <span style={{ color: 'var(--accent-red)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                        {validationErrors.description}
+                      </span>
+                    )}
                   </div>
 
                   <div className="form-group">
@@ -1862,9 +2096,21 @@ function Marketplace({ user, setUser, setActiveTab }) {
                       className="form-input"
                       onChange={handleImageUpload}
                       multiple
-                      style={{ background: 'transparent', border: '1px dashed var(--border-color)', padding: '10px' }}
+                      style={{ 
+                        background: 'transparent', 
+                        border: '1px dashed var(--border-color)', 
+                        padding: '10px',
+                        borderColor: validationErrors.images ? 'var(--accent-red)' : ''
+                      }}
                       disabled={formImages.length >= 5}
+                      ref={fileInputRef}
+                      id="listing-images-upload"
                     />
+                    {validationErrors.images && (
+                      <span style={{ color: 'var(--accent-red)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                        {validationErrors.images}
+                      </span>
+                    )}
                     {formImages.length > 0 && (
                       <div style={{ display: 'flex', gap: '10px', marginTop: '12px', flexWrap: 'wrap' }}>
                         {formImages.map((imgUrl, idx) => (
@@ -1882,7 +2128,17 @@ function Marketplace({ user, setUser, setActiveTab }) {
                             <img src={imgUrl} alt={`Preview ${idx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             <button
                               type="button"
-                              onClick={() => setFormImages(prev => prev.filter((_, i) => i !== idx))}
+                              onClick={() => {
+                                setFormImages(prev => {
+                                  setValidationErrors(v => {
+                                    const next = { ...v };
+                                    delete next.images;
+                                    return next;
+                                  });
+                                  return prev.filter((_, i) => i !== idx);
+                                });
+                                if (fileInputRef.current) fileInputRef.current.value = "";
+                              }}
                               style={{ 
                                 position: 'absolute', 
                                 top: '4px', 
@@ -1919,9 +2175,16 @@ function Marketplace({ user, setUser, setActiveTab }) {
                           className="form-input" 
                           placeholder="Enter your name"
                           value={formContactName}
-                          onChange={(e) => setFormContactName(e.target.value)}
+                          onChange={(e) => handleFieldChange('contactName', e.target.value, setFormContactName)}
                           required 
+                          id="listing-contact-name"
+                          style={{ borderColor: validationErrors.contactName ? 'var(--accent-red)' : '' }}
                         />
+                        {validationErrors.contactName && (
+                          <span style={{ color: 'var(--accent-red)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                            {validationErrors.contactName}
+                          </span>
+                        )}
                       </div>
 
                       <div className="form-group">
@@ -1931,9 +2194,16 @@ function Marketplace({ user, setUser, setActiveTab }) {
                           className="form-input" 
                           placeholder="Enter your phone number"
                           value={formContactPhone}
-                          onChange={(e) => setFormContactPhone(e.target.value)}
+                          onChange={(e) => handleFieldChange('contactPhone', e.target.value, setFormContactPhone)}
                           required 
+                          id="listing-contact-phone"
+                          style={{ borderColor: validationErrors.contactPhone ? 'var(--accent-red)' : '' }}
                         />
+                        {validationErrors.contactPhone && (
+                          <span style={{ color: 'var(--accent-red)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                            {validationErrors.contactPhone}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
